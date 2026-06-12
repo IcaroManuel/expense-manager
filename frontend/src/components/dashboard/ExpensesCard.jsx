@@ -28,12 +28,20 @@ import {
   formatBRL,
   EXPENSE_TYPE_LABEL,
   EXPENSE_STATUS_LABEL,
-  EXPENSE_TYPE_COLOR,
+  EXPENSE_COLOR_PALETTE,
 } from "@/lib/format";
 import { createExpense, deleteExpense, updateExpense } from "@/lib/api";
 import { DASHBOARD, MODAL } from "@/constants/testIds";
 
-const EMPTY = { id: null, name: "", type: "FIXED", value: "", status: "PENDING" };
+const DEFAULT_COLOR = EXPENSE_COLOR_PALETTE[0].value;
+const EMPTY = {
+  id: null,
+  name: "",
+  type: "FIXED",
+  value: "",
+  status: "PENDING",
+  color: DEFAULT_COLOR,
+};
 
 export default function ExpensesCard({ expenses, year, month, onChanged }) {
   const [open, setOpen] = useState(false);
@@ -57,6 +65,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged }) {
       type: expense.type,
       value: String(expense.value),
       status: expense.status,
+      color: expense.color || DEFAULT_COLOR,
     });
     setOpen(true);
   };
@@ -73,7 +82,12 @@ export default function ExpensesCard({ expenses, year, month, onChanged }) {
       if (form.id) {
         await updateExpense(
           form.id,
-          { name: form.name.trim(), value, status: form.status },
+          {
+            name: form.name.trim(),
+            value,
+            status: form.status,
+            color: form.color,
+          },
           year,
           month
         );
@@ -84,6 +98,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged }) {
           type: form.type,
           value,
           status: form.status,
+          color: form.color,
           year,
           month,
         });
@@ -164,7 +179,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged }) {
               <div className="flex items-center gap-3 min-w-0">
                 <div
                   className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white"
-                  style={{ background: EXPENSE_TYPE_COLOR[ex.type] }}
+                  style={{ background: ex.color || "#2D4238" }}
                 >
                   {ex.recurring ? <Repeat size={16} /> : <Plus size={16} />}
                 </div>
@@ -296,6 +311,35 @@ export default function ExpensesCard({ expenses, year, month, onChanged }) {
                   <SelectItem value="PAID">Paga</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Cor da despesa (gráfico)</Label>
+              <div
+                data-testid="expense-color-picker"
+                className="grid grid-cols-6 gap-2"
+              >
+                {EXPENSE_COLOR_PALETTE.map((c) => {
+                  const selected = form.color === c.value;
+                  return (
+                    <button
+                      key={c.value}
+                      type="button"
+                      data-testid={`expense-color-${c.value.replace("#", "")}`}
+                      onClick={() => setForm((f) => ({ ...f, color: c.value }))}
+                      title={c.label}
+                      aria-label={c.label}
+                      aria-pressed={selected}
+                      className={`h-8 w-full rounded-lg border transition-all duration-150 ${
+                        selected
+                          ? "ring-2 ring-offset-2 ring-[#2D4238] border-transparent scale-105"
+                          : "border-[#EAE7E1] hover:scale-105"
+                      }`}
+                      style={{ background: c.value }}
+                    />
+                  );
+                })}
+              </div>
             </div>
             <DialogFooter className="pt-2">
               <button

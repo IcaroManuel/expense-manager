@@ -60,6 +60,7 @@ def _materialize_expense(doc: dict, year: int, month: int) -> dict:
         "type": doc["type"],
         "value": doc["value"],
         "status": doc.get("status", ExpenseStatus.PENDING.value),
+        "color": doc.get("color", "#2D4238"),
         "recurring": doc.get("recurring", False),
         "year": year,
         "month": month,
@@ -192,6 +193,7 @@ class ExpenseService:
             type=payload.type,
             value=payload.value,
             status=payload.status,
+            color=payload.color,
             recurring=is_recurring,
             start_year=payload.year if is_recurring else None,
             start_month=payload.month if is_recurring else None,
@@ -221,6 +223,8 @@ class ExpenseService:
             fields["status"] = (
                 payload.status.value if hasattr(payload.status, "value") else payload.status
             )
+        if payload.color is not None:
+            fields["color"] = payload.color
         updated = await self._repo.update_fields(user_id, expense_id, fields)
         if not updated:
             return None

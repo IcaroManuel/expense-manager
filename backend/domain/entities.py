@@ -57,6 +57,7 @@ class Expense(BaseModel):
     type: ExpenseType
     value: float
     status: ExpenseStatus = ExpenseStatus.PENDING
+    color: str = "#2D4238"
     recurring: bool = False
     start_year: Optional[int] = None
     start_month: Optional[int] = None
@@ -105,6 +106,7 @@ class ExpenseCreate(BaseModel):
     type: ExpenseType
     value: float
     status: ExpenseStatus = ExpenseStatus.PENDING
+    color: str = "#2D4238"
     year: int
     month: int
 
@@ -113,6 +115,7 @@ class ExpenseUpdate(BaseModel):
     name: Optional[str] = None
     value: Optional[float] = None
     status: Optional[ExpenseStatus] = None
+    color: Optional[str] = None
 
 
 class BillingView(BaseModel):
@@ -133,6 +136,7 @@ class ExpenseView(BaseModel):
     type: ExpenseType
     value: float
     status: ExpenseStatus
+    color: str
     recurring: bool
     year: int
     month: int
