@@ -1,0 +1,42 @@
+{
+  "summary": "Full backend + frontend regression for Gestor Financeiro MVP (auth allowlist, billings/expenses with recurrence + skips, summary, multi-tenant isolation). 15/15 backend pytest passed. All critical UI flows passed: login render, /dashboard auth redirect, dashboard testIds, create billing, create expense, toggle PAID/PENDING, month navigation.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/auth/logout", "issue": "Uses Depends(get_current_user) (returns 401 if session expired) and clears cookie only; does not delete the session row from user_sessions even though AuthRepository.delete_session exists. Stale tokens remain valid until natural expiry."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_api.py",
+    "/app/backend/tests/conftest.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "(Minor) /api/auth/logout: read session_token cookie/header and call auth_repo.delete_session(token) so the row is removed from MongoDB, not just the cookie cleared.",
+    "(Optional hardening) /api/auth/session does not validate that the Emergent OAuth response email matches the Google-authenticated user — currently relies solely on is_email_allowed. Already enforced via allowlist, no fix needed unless multiple emails are added later."
+  ],
+  "critical_code_review_comments": [
+    "server.py: logout endpoint imports 'from fastapi import Request' inside the function but never uses Request; remove dead import.",
+    "domain/auth.py: AuthRepository.upsert_user mutates 'existing' dict in-place but then does 'User(**existing)' — fine, but the in-memory mutation does not match the DB doc projection (no created_at present in $set). created_at is preserved correctly because the doc is fetched first.",
+    "infrastructure/repositories.py: _month_filter correctly handles recurring start_year/start_month <= year/month and one-shot exact match; multi-tenant scoping by user_id verified across all queries.",
+    "Cookie config (SameSite=None; Secure; httpOnly; path=/) matches the cross-origin SPA pattern. OK.",
+    "Bearer token path in _extract_token + Cookie fallback works end-to-end. Verified.",
+    "Frontend Dashboard refresh() uses Promise.all and re-fetches after each mutation — UI stays in sync with summary card. Verified."
+  ],
+  "updated_files": [
+    "/app/backend/tests/conftest.py",
+    "/app/backend/tests/test_api.py"
+  ],
+  "success_rate": {"backend": "100% (15/15)", "frontend": "100% (all flows passed)"},
+  "test_credentials": "Auth uses Emergent Google OAuth (no password). For E2E we directly seed users + sessions in MongoDB per /app/auth_testing.md and /app/memory/test_credentials.md.",
+  "seed_data_creation": "Test fixtures create two users (icaroomanuel@gmail.com + a 2nd test email) with bearer tokens directly in mongo at session scope; all TEST_-prefixed billings/expenses are deleted by the tests themselves; fixture teardown removes the seeded users/sessions/data. A separate frontend session was also seeded and cleaned up at the end.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Test file is at /app/backend/tests/test_api.py with conftest.py providing user_a/user_b/anon_client/client_a/client_b fixtures. Re-run with: REACT_APP_BACKEND_URL=$(grep REACT_APP_BACKEND_URL /app/frontend/.env | cut -d= -f2) MONGO_URL=mongodb://localhost:27017 DB_NAME=test_database pytest /app/backend/tests/ -v. For frontend, seed a session via the mongo snippet in /app/auth_testing.md, add cookie session_token to the preview domain, then navigate to /dashboard.",
+  "rca_of_issues": "No blocking issues found. Only minor improvement is the logout endpoint not deleting the session row from MongoDB; functionally users are logged out client-side because the cookie is cleared, but the bearer token in Authorization header would still be valid until natural 7-day expiry. Low impact for current single-allowlisted-user setup."
+}
