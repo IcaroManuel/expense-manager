@@ -1,0 +1,112 @@
+{
+  "theme": "light",
+  "archetype": "1 (Organic & Earthy)",
+  "typography": {
+    "font_families": {
+      "headings": "Manrope",
+      "body": "IBM Plex Sans",
+      "mono": "JetBrains Mono"
+    },
+    "hierarchy": {
+      "h1": "text-4xl sm:text-5xl tracking-tight leading-none",
+      "h2": "text-2xl sm:text-3xl tracking-tight leading-none",
+      "h3": "text-xl sm:text-2xl tracking-tight",
+      "h4": "text-lg sm:text-xl font-medium",
+      "body": "text-base leading-relaxed",
+      "small": "text-sm",
+      "labels": "text-xs uppercase tracking-[0.2em] font-medium"
+    }
+  },
+  "colors": {
+    "background": "#F9F8F6",
+    "surface": "#FFFFFF",
+    "surface_secondary": "#F3F1ED",
+    "border": "#EAE7E1",
+    "primary": {
+      "DEFAULT": "#2D4238",
+      "foreground": "#FFFFFF",
+      "hover": "#3C5749"
+    },
+    "text": {
+      "primary": "#1C1C19",
+      "secondary": "#6B6A65",
+      "muted": "#9A9892"
+    },
+    "status": {
+      "positive": "#4A6B4A",
+      "positive_bg": "#EDF2ED",
+      "negative": "#B34A3E",
+      "negative_bg": "#F9EBEA",
+      "warning": "#C68B35",
+      "warning_bg": "#FDF6EA"
+    }
+  },
+  "spacing_and_layout": {
+    "base_padding": "p-6",
+    "generous_padding": "p-8",
+    "grid_mode": "control_room",
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "border_radius": "rounded-2xl",
+    "gap": "gap-6",
+    "card_structure": "bg-white border border-[#EAE7E1] rounded-2xl p-6"
+  },
+  "components": {
+    "navbar": {
+      "style": "Solid background with delicate bottom border: bg-white/90 backdrop-blur-xl border-b border-[#EAE7E1] sticky top-0 z-50",
+      "elements": ["Logo", "Month/Year Selector", "User Avatar"]
+    },
+    "cards": {
+      "style": "Flat background, 1px subtle border, no shadow by default",
+      "hover": "hover:-translate-y-1 hover:shadow-md transition-all duration-200"
+    },
+    "buttons": {
+      "primary": "bg-[#2D4238] text-white hover:bg-[#3C5749] rounded-full px-6 py-2.5 font-medium transition-colors",
+      "secondary": "bg-[#F3F1ED] text-[#1C1C19] hover:bg-[#EAE7E1] rounded-full px-6 py-2.5 font-medium transition-colors",
+      "ghost": "hover:bg-[#F3F1ED] rounded-full px-4 py-2 transition-colors text-[#1C1C19]"
+    },
+    "badges": {
+      "paid": "bg-[#EDF2ED] text-[#4A6B4A] rounded-full px-3 py-1 text-xs font-medium uppercase tracking-wider",
+      "pending": "bg-[#FDF6EA] text-[#C68B35] rounded-full px-3 py-1 text-xs font-medium uppercase tracking-wider"
+    },
+    "charts": {
+      "type": "Bar Chart",
+      "library": "Recharts via Shadcn",
+      "colors": {
+        "Fixed": "#2D4238",
+        "Card": "#4A6B4A",
+        "Detached": "#C68B35"
+      }
+    }
+  },
+  "interactions_and_motion": {
+    "hover_states": "All interactive elements must change background/text color on hover.",
+    "transitions": "transition-all duration-200 ease-in-out",
+    "animations": "Use micro-interactions for feedback. Simple staggered fade-ins for list items."
+  },
+  "media_and_icons": {
+    "icons_library": "lucide-react",
+    "images": {
+      "user_avatar": {
+        "url": "https://images.pexels.com/photos/29995740/pexels-photo-29995740.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=150&w=150",
+        "description": "Professional user avatar for the header"
+      }
+    }
+  },
+  "accessibility": {
+    "contrast": "Text meets 4.5:1 ratio against backgrounds.",
+    "focus_states": "focus-visible:ring-2 focus-visible:ring-[#2D4238] focus-visible:ring-offset-2",
+    "testing": "All interactive elements MUST include data-testid attribute"
+  },
+  "instructions_to_main_agent": [
+    "1. Ensure 'Manrope' and 'IBM Plex Sans' fonts are imported (e.g., via Google Fonts) and configured in tailwind.config.js.",
+    "2. Build the single-page dashboard using the 'Control Room' grid pattern (MODE B).",
+    "3. Header: Include a Month/Year selector (e.g., `< Select />` or arrow-based navigation), and the user avatar.",
+    "4. Cards (Resumo): 4 top-level widgets for Total Entradas, Total Saídas, Saldo, % Comprometido. Use `grid-cols-1 md:grid-cols-4` with tight gaps (`gap-4` or `gap-6`).",
+    "5. Main layout: Place the 'Gráfico de barras' spanning 2 columns, and Faturamento/Despesas lists spanning 1 column each, or arrange them logically so every pixel is utilized without jagged bottoms.",
+    "6. Faturamento: List items with 'Salary' or 'Award' type. Include an Add button.",
+    "7. Despesas: List items with 'Fixed', 'Card', or 'Detached' type, showing 'Paid' or 'Pending' badges. Include Add/Edit buttons.",
+    "8. Modals: Use Shadcn Dialog for the small Add/Edit modals for Faturamento and Despesas.",
+    "9. Use `lucide-react` for icons.",
+    "10. CRITICAL: Add `data-testid` to all interactive elements (buttons, inputs, selects, dialog triggers) in kebab-case."
+  ]
+}
