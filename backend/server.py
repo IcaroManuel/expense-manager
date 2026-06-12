@@ -19,7 +19,7 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Response
+from fastapi import APIRouter, Cookie, Depends, FastAPI, Header, HTTPException, Query, Response
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel
 from starlette.middleware.cors import CORSMiddleware
@@ -137,11 +137,16 @@ async def me(current: User = Depends(get_current_user)):
 
 @api_router.post("/auth/logout")
 async def logout(
-    response: Response, current: User = Depends(get_current_user)
+    response: Response,
+    session_token: str | None = Cookie(default=None),
+    authorization: str | None = Header(default=None),
 ):
-    # Best-effort delete of current session cookie+row.
-    from fastapi import Request  # local import to avoid unused at top
-    # We don't have request here; clear cookie is enough + delete from DB by token via Cookie.
+    # Resolve token using the same logic as get_current_user, then delete row + cookie.
+    token = session_token
+    if not token and authorization and authorization.lower().startswith("bearer "):
+        token = authorization.split(" ", 1)[1].strip()
+    if token:
+        await auth_repo.delete_session(token)
     clear_session_cookie(response)
     return {"ok": True}
 
