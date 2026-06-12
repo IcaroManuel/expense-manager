@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  name      String
+  picture   String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  billings        Billing[]
+  expenses        Expense[]
+  recurrenceSkips RecurrenceSkip[]
+
+  @@map("users")
+}
+
+model Billing {
+  id          String      @id @default(uuid())
+  name        String
+  type        BillingType
+  value       Decimal     @db.Decimal(10, 2)
+  recurring   Boolean     @default(false)
+  startYear   Int?
+  startMonth  Int?
+  year        Int?
+  month       Int?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("billings")
+}
+
+
+model Expense {
+  id          String        @id @default(uuid())
+  name        String
+  type        ExpenseType
+  status      ExpenseStatus
+  value       Decimal       @db.Decimal(10, 2)
+  color       String        @default("#2D4238")
+  recurring   Boolean       @default(false)
+  startYear   Int?
+  startMonth  Int?
+  year        Int?
+  month       Int?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("expenses")
+}
+
+model RecurrenceSkip {
+  id          String   @id @default(uuid())
+  entityKind  String   // "billing" ou "expense"
+  entityId    String
+  year        Int
+  month       Int
+  createdAt   DateTime @default(now())
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Equivalente ao índice único para o Upsert funcionar no Prisma
+  @@unique([userId, entityKind, entityId, year, month])
+  @@map("recurrence_skips")
+}
+
+enum BillingType {
+  SALARY
+  AWARD
+}
+
+enum ExpenseType {
+  FIXED
+  CARD
+  DETACHED
+}
+
+enum ExpenseStatus {
+  PAID
+  PENDING
+}
