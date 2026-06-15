@@ -40,7 +40,7 @@ export class AuthController {
     });
 
     return {
-      user_id: user.id,
+      id: user.id,
       email: user.email,
       name: user.name,
       picture: user.picture,
@@ -53,7 +53,7 @@ export class AuthController {
     // Busca os dados fresquinhos do banco
     const dbUser = await this.authService.findUserByEmail(user.email);
     return {
-      user_id: dbUser.id,
+      id: dbUser.id,
       email: dbUser.email,
       name: dbUser.name,
       picture: dbUser.picture,

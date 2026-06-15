@@ -29,13 +29,19 @@ export class AuthService {
       });
       return resp.data;
     } catch (error) {
-      throw new UnauthorizedException('Invalid session_id from provider');
+      throw new UnauthorizedException({
+        message: 'Sessão inválida ou expirada',
+        code: 'INVALID_SESSION',
+      });
     }
   }
 
   async upsertUser(email: string, name: string, picture?: string) {
     if (!this.isEmailAllowed(email)) {
-      throw new UnauthorizedException('Email not authorized');
+      throw new UnauthorizedException({
+        message: 'Email não autorizado',
+        code: 'UNAUTHORIZED_EMAIL',
+      });
     }
 
     const existingUser = await this.prisma.user.findUnique({
@@ -53,11 +59,6 @@ export class AuthService {
       data: { email, name, picture },
     });
   }
-
-  // O NestJS (diferente do FastAPI) geralmente utiliza JWT para manter o estado da sessão sem
-  // precisar bater no banco em toda requisição. Como o seu banco Prisma NÃO tem a tabela
-  // 'UserSession' (pois não definimos no schema), vamos simplificar e utilizar o próprio
-  // Token da Emergent validado via cache ou retornar o usuário direto.
 
   async findUserByEmail(email: string) {
     return this.prisma.user.findUnique({ where: { email } });

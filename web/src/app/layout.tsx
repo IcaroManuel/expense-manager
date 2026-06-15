@@ -5,7 +5,6 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/lib/auth-context";
 
-// 1. Fontes
 const manrope = Manrope({
   subsets: ["latin"],
   variable: "--font-manrope",
@@ -22,7 +21,6 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
 });
 
-// 2. Metadados (Substitui as tags <meta> do head no index.html)
 export const metadata: Metadata = {
   title: "Emergent | Fullstack App",
   description: "A product of emergent.sh",

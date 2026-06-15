@@ -10,6 +10,7 @@ import SpendingChart from "@/components/dashboard/SpendingChart";
 import { fetchBillings, fetchExpenses, fetchSummary } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { DASHBOARD } from "@/constants/test-ids";
+import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
   const today = new Date();
@@ -18,7 +19,14 @@ export default function Dashboard() {
   const [billings, setBillings] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [summary, setSummary] = useState<any>(null);
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
+  const router = useRouter();
+
+    useEffect(() => {
+      if (!loading && !user) {
+        router.replace("/login");
+      }
+    }, [user, loading, router]);
 
   const refresh = useCallback(async () => {
     const [b, e, s] = await Promise.all([
@@ -41,6 +49,11 @@ export default function Dashboard() {
   };
 
   return (
+    <>
+    <div>
+      {loading ? <div className="min-h-screen flex items-center justify-center">Carregando...</div> : null}
+      {!user && <>{children}</>}
+    </div>
     <div data-testid={DASHBOARD.root} className="min-h-screen bg-[#F9F8F6] text-[#1C1C19]">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-[#EAE7E1]">
@@ -128,5 +141,6 @@ export default function Dashboard() {
         </footer>
       </main>
     </div>
+    </>
   );
 }

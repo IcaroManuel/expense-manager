@@ -1,8 +1,13 @@
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+
 import { Request } from 'express';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
+
+  constructor(private jwtService: JwtService) {}
+
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<Request>();
     const token = this.extractTokenFromHeader(request) || this.extractTokenFromCookie(request);
@@ -10,11 +15,13 @@ export class JwtAuthGuard implements CanActivate {
     if (!token) {
       throw new UnauthorizedException('Not authenticated');
     }
-
-    // NOTA: Em uma implementação completa com NestJS, você decodificaria o JWT aqui.
-    // Por enquanto, vamos permitir a requisição e salvar o token (simulando a sessão).
-    request['user'] = { sessionToken: token };
-    return true;
+    try {
+          const decoded = this.jwtService.verify(token);
+          request['user'] = { email: decoded.email, sessionToken: token };
+          return true;
+        } catch {
+          throw new UnauthorizedException('Invalid token');
+        }
   }
 
   private extractTokenFromHeader(request: Request): string | undefined {
