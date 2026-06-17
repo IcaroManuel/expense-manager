@@ -36,15 +36,15 @@ export default function SummaryCards({ summary }) {
       <Card
         testId={DASHBOARD.summaryIncome}
         label="Total de entradas"
-        value={formatBRL(summary.total_income)}
+        value={formatBRL(summary.totalIncome)}
         icon={ArrowUpRight}
         accent={{ bg: "#EDF2ED", fg: "#4A6B4A" }}
       />
       <Card
         testId={DASHBOARD.summaryExpense}
         label="Total de saídas"
-        value={formatBRL(summary.total_expenses)}
-        sub={`${formatBRL(summary.total_paid)} pagas · ${formatBRL(summary.total_pending)} pendentes`}
+        value={formatBRL(summary.totalExpenses)}
+        sub={`${formatBRL(summary.totalPaid)} pagas · ${formatBRL(summary.totalPending)} pendentes`}
         icon={ArrowDownRight}
         accent={{ bg: "#F9EBEA", fg: "#B34A3E" }}
       />
@@ -61,7 +61,7 @@ export default function SummaryCards({ summary }) {
       <Card
         testId={DASHBOARD.summaryCommitted}
         label="% comprometido"
-        value={`${summary.committed_percentage.toFixed(1)}%`}
+        value={`${summary.committedPercentage.toFixed(1)}%`}
         sub="da sua renda do mês"
         icon={Percent}
         accent={{ bg: "#FDF6EA", fg: "#C68B35" }}

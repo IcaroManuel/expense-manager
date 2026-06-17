@@ -52,7 +52,6 @@ export default function Dashboard() {
     <>
     <div>
       {loading ? <div className="min-h-screen flex items-center justify-center">Carregando...</div> : null}
-      {!user && <>{children}</>}
     </div>
     <div data-testid={DASHBOARD.root} className="min-h-screen bg-[#F9F8F6] text-[#1C1C19]">
       {/* Header */}

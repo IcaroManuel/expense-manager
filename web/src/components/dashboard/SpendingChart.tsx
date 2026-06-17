@@ -30,9 +30,9 @@ const CustomTooltip = ({ active, payload }) => {
 
 export default function SpendingChart({ summary }) {
   if (!summary) return null;
-  const income = Number(summary.total_income || 0);
-  const buckets = summary.expenses_by_type || [];
-  const order = ["FIXED", "CARD", "DETACHED"];
+  const income = Number(summary.totalIncome || 0);
+  const buckets = summary.expensesByType  || [];
+  const order = ["FIXED", "CARD", "DETACHED"];s
   const data = order.map((t) => {
     const found = buckets.find((b) => b.type === t);
     const value = found ? Number(found.value) : 0;
