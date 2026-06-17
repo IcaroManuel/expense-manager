@@ -2,8 +2,27 @@ import React from "react";
 import { ArrowDownRight, ArrowUpRight, Wallet, Percent } from "lucide-react";
 import { DASHBOARD } from "@/constants/test-ids";
 import { formatBRL } from "@/lib/format";
+import { Summary } from "@/dtos/summary";
 
-function Card({ label, value, sub, accent, icon: Icon, testId }) {
+export interface AccentColors {
+  bg: string;
+  fg: string;
+}
+
+export interface CardProps {
+  label: string;
+  value: string | React.ReactNode;
+  sub?: string | null;
+  accent: AccentColors;
+  icon: React.ElementType;
+  testId?: string;
+}
+
+export interface SummaryCardsProps {
+  summary?: Summary | null;
+}
+
+function Card({ label, value, sub, accent, icon: Icon, testId }: CardProps) {
   return (
     <div
       data-testid={testId}
@@ -28,9 +47,11 @@ function Card({ label, value, sub, accent, icon: Icon, testId }) {
   );
 }
 
-export default function SummaryCards({ summary }) {
+export default function SummaryCards({ summary }: SummaryCardsProps) {
   if (!summary) return null;
+
   const balancePositive = summary.balance >= 0;
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <Card

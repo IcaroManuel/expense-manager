@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Patch, Delete, Body, Query, Param, UseGuards, NotFoundException, HttpCode, ParseIntPipe } from '@nestjs/common';
-import { ExpensesService, ExpenseCreate, ExpenseUpdate } from './expenses.service';
+import { ExpensesService, type ExpenseCreate, type ExpenseUpdate } from './expenses.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 

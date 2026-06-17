@@ -27,22 +27,34 @@ import { toast } from "sonner";
 import { formatBRL, BILLING_TYPE_LABEL } from "@/lib/format";
 import { createBilling, deleteBilling } from "@/lib/api";
 import { DASHBOARD, MODAL } from "@/constants/test-ids";
+import { Billing, BillingType } from "@/dtos/billing";
 
-export default function BillingsCard({ billings, year, month, onChanged }) {
+export interface BillingsCardProps {
+  billings: Billing[];
+  year: number;
+  month: number;
+  onChanged?: () => void;
+}
+
+export default function BillingsCard({ billings, year, month, onChanged }: BillingsCardProps) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", type: "SALARY", value: "" });
+
+  const [form, setForm] = useState({ name: "", type: "SALARY" as BillingType, value: "" });
   const [submitting, setSubmitting] = useState(false);
 
   const reset = () => setForm({ name: "", type: "SALARY", value: "" });
 
-  const submit = async (e) => {
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const value = parseFloat(form.value.toString().replace(",", "."));
+
     if (!form.name.trim() || !value || value <= 0) {
       toast.error("Preencha nome e valor (> 0).");
       return;
     }
+
     setSubmitting(true);
+
     try {
       await createBilling({
         name: form.name.trim(),
@@ -62,7 +74,7 @@ export default function BillingsCard({ billings, year, month, onChanged }) {
     }
   };
 
-  const onDelete = async (item, scope = "month") => {
+  const onDelete = async (item: Billing, scope: "month" | "all" = "month") => {
     try {
       await deleteBilling(item.id, year, month, scope);
       toast.success(scope === "all" ? "Removido permanentemente" : "Removido deste mês");
@@ -126,7 +138,7 @@ export default function BillingsCard({ billings, year, month, onChanged }) {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="font-display font-semibold text-[#1C1C19]">{formatBRL(b.value)}</div>
+              <div className="font-display font-semibold text-[#1C1C19]">{formatBRL(Number(b.value))}</div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -183,7 +195,7 @@ export default function BillingsCard({ billings, year, month, onChanged }) {
                 <Label>Tipo</Label>
                 <Select
                   value={form.type}
-                  onValueChange={(v) => setForm((f) => ({ ...f, type: v }))}
+                  onValueChange={(v: BillingType) => setForm((f) => ({ ...f, type: v }))}
                 >
                   <SelectTrigger data-testid={MODAL.billingType}>
                     <SelectValue />

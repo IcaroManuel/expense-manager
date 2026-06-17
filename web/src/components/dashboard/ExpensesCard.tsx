@@ -32,9 +32,26 @@ import {
 } from "@/lib/format";
 import { createExpense, deleteExpense, updateExpense } from "@/lib/api";
 import { DASHBOARD, MODAL } from "@/constants/test-ids";
+import { Expense, ExpenseStatus, ExpenseType } from "@/dtos/expense";
+
+export interface ExpensesCardProps {
+  expenses: Expense[];
+  year: number;
+  month: number;
+  onChanged?: () => void;
+}
+
+interface ExpenseFormState {
+  id: string | null;
+  name: string;
+  type: ExpenseType;
+  value: string;
+  status: ExpenseStatus;
+  color: string;
+}
 
 const DEFAULT_COLOR = EXPENSE_COLOR_PALETTE[0].value;
-const EMPTY = {
+const EMPTY: ExpenseFormState = {
   id: null,
   name: "",
   type: "FIXED",
@@ -43,12 +60,12 @@ const EMPTY = {
   color: DEFAULT_COLOR,
 };
 
-export default function ExpensesCard({ expenses, year, month, onChanged }) {
+export default function ExpensesCard({ expenses, year, month, onChanged }: ExpensesCardProps) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState(EMPTY);
+  const [form, setForm] = useState<ExpenseFormState>(EMPTY);
   const [submitting, setSubmitting] = useState(false);
 
-  const handleOpenChange = (next) => {
+  const handleOpenChange = (next: boolean) => {
     if (!next) setForm(EMPTY);
     setOpen(next);
   };
@@ -58,7 +75,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged }) {
     setOpen(true);
   };
 
-  const startEdit = (expense) => {
+  const startEdit = (expense: Expense) => {
     setForm({
       id: expense.id,
       name: expense.name,
@@ -70,7 +87,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged }) {
     setOpen(true);
   };
 
-  const submit = async (e) => {
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const value = parseFloat(form.value.toString().replace(",", "."));
     if (!form.name.trim() || !value || value <= 0) {
@@ -113,7 +130,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged }) {
     }
   };
 
-  const onDelete = async (item, scope = "month") => {
+  const onDelete = async (item: Expense, scope: "month" | "all" = "month") => {
     try {
       await deleteExpense(item.id, year, month, scope);
       toast.success(scope === "all" ? "Removida permanentemente" : "Removida deste mês");
@@ -123,7 +140,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged }) {
     }
   };
 
-  const toggleStatus = async (item) => {
+  const toggleStatus = async (item: Expense) => {
     try {
       await updateExpense(
         item.id,
@@ -204,7 +221,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged }) {
                   {EXPENSE_STATUS_LABEL[ex.status]}
                 </button>
                 <div className="font-display font-semibold text-[#1C1C19] tabular-nums">
-                  {formatBRL(ex.value)}
+                  {formatBRL(Number(ex.value))}
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -270,7 +287,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged }) {
                 <Label>Tipo</Label>
                 <Select
                   value={form.type}
-                  onValueChange={(v) => setForm((f) => ({ ...f, type: v }))}
+                  onValueChange={(v: ExpenseType) => setForm((f) => ({ ...f, type: v }))}
                   disabled={!!form.id}
                 >
                   <SelectTrigger data-testid={MODAL.expenseType}>
@@ -299,7 +316,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged }) {
               <Label>Status</Label>
               <Select
                 value={form.status}
-                onValueChange={(v) => setForm((f) => ({ ...f, status: v }))}
+                onValueChange={(v: ExpenseStatus) => setForm((f) => ({ ...f, status: v }))}
               >
                 <SelectTrigger data-testid={MODAL.expenseStatus}>
                   <SelectValue />

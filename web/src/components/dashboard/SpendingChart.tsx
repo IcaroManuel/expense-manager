@@ -11,8 +11,34 @@ import {
 } from "recharts";
 import { EXPENSE_TYPE_LABEL, EXPENSE_TYPE_COLOR, formatBRL } from "@/lib/format";
 import { DASHBOARD } from "@/constants/test-ids";
+import { ExpenseType } from "@/dtos/expense";
 
-const CustomTooltip = ({ active, payload }) => {
+export interface ExpenseBucket {
+  type: ExpenseType | string;
+  value: number | string;
+}
+
+export interface SummaryData {
+  totalIncome?: number | string;
+  expensesByType?: ExpenseBucket[];
+}
+
+export interface SpendingChartProps {
+  summary?: SummaryData | null;
+}
+
+export interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    value: number;
+    payload: {
+      label: string;
+      percent: number;
+    };
+  }>;
+}
+
+const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (!active || !payload?.length) return null;
   const p = payload[0];
   return (
@@ -28,20 +54,24 @@ const CustomTooltip = ({ active, payload }) => {
   );
 };
 
-export default function SpendingChart({ summary }) {
+export default function SpendingChart({ summary }: SpendingChartProps) {
   if (!summary) return null;
+
   const income = Number(summary.totalIncome || 0);
-  const buckets = summary.expensesByType  || [];
-  const order = ["FIXED", "CARD", "DETACHED"];s
+  const buckets = summary.expensesByType || [];
+
+  // Tipando explicitamente o array de ordem para garantir o tipo no .map
+  const order: ExpenseType[] = ["FIXED", "CARD", "DETACHED"];
+
   const data = order.map((t) => {
     const found = buckets.find((b) => b.type === t);
     const value = found ? Number(found.value) : 0;
     return {
       type: t,
-      label: EXPENSE_TYPE_LABEL[t],
+      label: EXPENSE_TYPE_LABEL[t as keyof typeof EXPENSE_TYPE_LABEL],
       value,
       percent: income > 0 ? (value / income) * 100 : 0,
-      color: EXPENSE_TYPE_COLOR[t],
+      color: EXPENSE_TYPE_COLOR[t as keyof typeof EXPENSE_TYPE_COLOR],
     };
   });
 
@@ -67,9 +97,9 @@ export default function SpendingChart({ summary }) {
             <div key={t} className="flex items-center gap-2 text-xs text-[#6B6A65]">
               <span
                 className="inline-block w-3 h-3 rounded-sm"
-                style={{ background: EXPENSE_TYPE_COLOR[t] }}
+                style={{ background: EXPENSE_TYPE_COLOR[t as keyof typeof EXPENSE_TYPE_COLOR] }}
               />
-              {EXPENSE_TYPE_LABEL[t]}
+              {EXPENSE_TYPE_LABEL[t as keyof typeof EXPENSE_TYPE_LABEL]}
             </div>
           ))}
         </div>
@@ -94,7 +124,7 @@ export default function SpendingChart({ summary }) {
                 tick={{ fill: "#6B6A65", fontSize: 12 }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(v) => (v >= 1000 ? `R$${(v / 1000).toFixed(1)}k` : `R$${v}`)}
+                tickFormatter={(v: number) => (v >= 1000 ? `R$${(v / 1000).toFixed(1)}k` : `R$${v}`)}
               />
               <Tooltip cursor={{ fill: "#F3F1ED" }} content={<CustomTooltip />} />
               <Bar dataKey="value" radius={[8, 8, 0, 0]} maxBarSize={64}>

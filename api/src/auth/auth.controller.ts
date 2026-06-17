@@ -1,8 +1,9 @@
 import { Controller, Post, Get, Body, Req, Res, UseGuards, UnauthorizedException, ForbiddenException, HttpCode } from '@nestjs/common';
-import { Response, Request } from 'express';
+import { type Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CurrentUser } from './current-user.decorator';
+import { type User } from '@prisma/client';
 
 @Controller('api/auth')
 export class AuthController {
@@ -15,10 +16,10 @@ export class AuthController {
       throw new UnauthorizedException('Invalid session payload');
     }
 
-    const data = await this.authService.exchangeSessionId(sessionId);
+    const data = await this.authService.exchangeSessionId(sessionId) as { email: string; name?: string; picture?: string; session_token: string };
     const email = (data.email || '').toLowerCase();
     const name = data.name || '';
-    const picture = data.picture;
+    const picture = data.picture || '';
     const sessionToken = data.session_token;
 
     if (!email || !sessionToken) {
@@ -49,14 +50,13 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  async me(@CurrentUser() user: any) {
-    // Busca os dados fresquinhos do banco
+  async me(@CurrentUser() user: User) {
     const dbUser = await this.authService.findUserByEmail(user.email);
     return {
-      id: dbUser.id,
-      email: dbUser.email,
-      name: dbUser.name,
-      picture: dbUser.picture,
+      id: dbUser?.id,
+      email: dbUser?.email,
+      name: dbUser?.name,
+      picture: dbUser?.picture,
     };
   }
 

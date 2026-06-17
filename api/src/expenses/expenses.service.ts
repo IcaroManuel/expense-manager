@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { EventHub } from '../common/patterns/event-hub';
-import { IRecurrenceSkipRepository, SKIP_REPOSITORY } from '../billings/billings.service';
+import { type IRecurrenceSkipRepository, SKIP_REPOSITORY } from '../billings/billings.service';
 
 export interface ExpenseCreate { name: string; type: string; status: string; color?: string; value: number; year: number; month: number; }
 export interface ExpenseUpdate { name?: string; value?: number; status?: string; color?: string; }

@@ -39,7 +39,7 @@ export class RecurrenceSkipRepository implements IRecurrenceSkipRepository {
       where: { userId, entityKind, year, month },
       select: { entityId: true },
     });
-    return skips.map((skip) => skip.entityId);
+    return skips.map((skip: { entityId: string }) => skip.entityId);
   }
 
   async deleteAllForEntity(userId: string, entityKind: string, entityId: string): Promise<void> {

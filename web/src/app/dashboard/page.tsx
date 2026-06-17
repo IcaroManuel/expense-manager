@@ -22,11 +22,11 @@ export default function Dashboard() {
   const { user, logout, loading } = useAuth();
   const router = useRouter();
 
-    useEffect(() => {
-      if (!loading && !user) {
-        router.replace("/login");
-      }
-    }, [user, loading, router]);
+    // useEffect(() => {
+    //   if (!loading && !user) {
+    //     router.replace("/login");
+    //   }
+    // }, [user, loading, router]);
 
   const refresh = useCallback(async () => {
     const [b, e, s] = await Promise.all([

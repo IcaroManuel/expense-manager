@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Patch, Delete, Body, Query, Param, UseGuards, NotFoundException, HttpCode, ParseIntPipe } from '@nestjs/common';
-import { BillingsService, BillingCreate, BillingUpdate } from './billings.service';
+import { BillingsService, type BillingCreate, type BillingUpdate } from './billings.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 

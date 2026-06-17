@@ -3,11 +3,18 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { MONTHS_PT } from "@/lib/format";
 import { DASHBOARD } from "@/constants/test-ids";
 
-export default function MonthSelector({ year, month, onChange }) {
+export interface MonthSelectorProps {
+  year: number;
+  month: number;
+  onChange: (year: number, month: number) => void;
+}
+
+export default function MonthSelector({ year, month, onChange }: MonthSelectorProps) {
   const prev = () => {
     if (month === 1) onChange(year - 1, 12);
     else onChange(year, month - 1);
   };
+
   const next = () => {
     if (month === 12) onChange(year + 1, 1);
     else onChange(year, month + 1);
