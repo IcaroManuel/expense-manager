@@ -1,6 +1,9 @@
 import { Injectable, Inject, BadRequestException } from '@nestjs/common';
 import { EventHub } from '../common/patterns/event-hub';
-import { type IRecurrenceSkipRepository, SKIP_REPOSITORY } from '../billings/billings.service';
+import {
+  type IRecurrenceSkipRepository,
+  SKIP_REPOSITORY,
+} from '../billings/billings.service';
 
 export interface ExpenseCreate {
   name: string;
@@ -65,9 +68,18 @@ export class ExpensesService {
     };
   }
 
-  async listForMonth(userId: string, year: number, month: number): Promise<any[]> {
+  async listForMonth(
+    userId: string,
+    year: number,
+    month: number,
+  ): Promise<any[]> {
     const raw = await this.repo.listForMonth(userId, year, month);
-    const skipped = await this.skips.listForMonth(userId, 'expense', year, month);
+    const skipped = await this.skips.listForMonth(
+      userId,
+      'expense',
+      year,
+      month,
+    );
 
     const out = [];
     for (const d of raw) {
@@ -77,7 +89,11 @@ export class ExpensesService {
       out.push(this.materializeExpense(d, year, month));
     }
 
-    out.sort((a, b) => a.type.localeCompare(b.type) || new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    out.sort(
+      (a, b) =>
+        a.type.localeCompare(b.type) ||
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
     return out;
   }
 
@@ -88,7 +104,9 @@ export class ExpensesService {
       const endIndex = payload.endYear * 12 + payload.endMonth;
       const startIndex = payload.year * 12 + payload.month;
       if (endIndex < startIndex) {
-        throw new BadRequestException('A data de término não pode ser anterior ao mês inicial.');
+        throw new BadRequestException(
+          'A data de término não pode ser anterior ao mês inicial.',
+        );
       }
     }
 
@@ -115,7 +133,13 @@ export class ExpensesService {
     return this.materializeExpense(expense, payload.year, payload.month);
   }
 
-  async update(userId: string, expenseId: string, payload: ExpenseUpdate, year: number, month: number): Promise<any | null> {
+  async update(
+    userId: string,
+    expenseId: string,
+    payload: ExpenseUpdate,
+    year: number,
+    month: number,
+  ): Promise<any | null> {
     const fields: any = {};
     if (payload.name !== undefined) fields.name = payload.name;
     if (payload.value !== undefined) fields.value = payload.value;
@@ -131,7 +155,12 @@ export class ExpensesService {
     return this.materializeExpense(updated, year, month);
   }
 
-  async deleteForMonth(userId: string, expenseId: string, year: number, month: number): Promise<boolean> {
+  async deleteForMonth(
+    userId: string,
+    expenseId: string,
+    year: number,
+    month: number,
+  ): Promise<boolean> {
     const doc = await this.repo.findById(userId, expenseId);
     if (!doc) return false;
 
@@ -141,7 +170,10 @@ export class ExpensesService {
       await this.repo.delete(userId, expenseId);
     }
 
-    this.hub.publish({ name: 'expense.deleted', payload: { id: expenseId, year, month } });
+    this.hub.publish({
+      name: 'expense.deleted',
+      payload: { id: expenseId, year, month },
+    });
     return true;
   }
 
@@ -152,7 +184,10 @@ export class ExpensesService {
     await this.repo.delete(userId, expenseId);
     await this.skips.deleteAllForEntity(userId, 'expense', expenseId);
 
-    this.hub.publish({ name: 'expense.template_deleted', payload: { id: expenseId } });
+    this.hub.publish({
+      name: 'expense.template_deleted',
+      payload: { id: expenseId },
+    });
     return true;
   }
 }

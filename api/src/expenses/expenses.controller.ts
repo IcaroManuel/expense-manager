@@ -1,5 +1,22 @@
-import { Controller, Get, Post, Patch, Delete, Body, Query, Param, UseGuards, NotFoundException, HttpCode, ParseIntPipe } from '@nestjs/common';
-import { ExpensesService, type ExpenseCreate, type ExpenseUpdate } from './expenses.service';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Query,
+  Param,
+  UseGuards,
+  NotFoundException,
+  HttpCode,
+  ParseIntPipe,
+} from '@nestjs/common';
+import {
+  ExpensesService,
+  type ExpenseCreate,
+  type ExpenseUpdate,
+} from './expenses.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 
@@ -18,7 +35,10 @@ export class ExpensesController {
   }
 
   @Post()
-  async createExpense(@Body() payload: ExpenseCreate, @CurrentUser() user: any) {
+  async createExpense(
+    @Body() payload: ExpenseCreate,
+    @CurrentUser() user: any,
+  ) {
     return this.expensesService.create(user.id, payload);
   }
 
@@ -30,7 +50,13 @@ export class ExpensesController {
     @Query('month', ParseIntPipe) month: number,
     @CurrentUser() user: any,
   ) {
-    const updated = await this.expensesService.update(user.id, id, payload, year, month);
+    const updated = await this.expensesService.update(
+      user.id,
+      id,
+      payload,
+      year,
+      month,
+    );
     if (!updated) {
       throw new NotFoundException('Expense not found');
     }

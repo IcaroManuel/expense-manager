@@ -20,7 +20,10 @@ export class EventHub {
       try {
         obs.update(event);
       } catch (error: any) {
-        this.logger.error(`Observer failed for event ${event.name}`, error.stack);
+        this.logger.error(
+          `Observer failed for event ${event.name}`,
+          error.stack,
+        );
       }
     }
   }
@@ -31,7 +34,9 @@ export class LoggingObserver implements Observer {
   private readonly logger = new Logger(LoggingObserver.name);
 
   update(event: DomainEvent): void {
-    this.logger.log(`event=${event.name} payload=${JSON.stringify(event.payload)}`);
+    this.logger.log(
+      `event=${event.name} payload=${JSON.stringify(event.payload)}`,
+    );
   }
 }
 

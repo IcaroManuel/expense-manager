@@ -5,20 +5,23 @@ export interface TotalStrategy {
 export class SumValueStrategy implements TotalStrategy {
   calculate(items: any[]): number {
     return Number(
-      items.reduce((acc, item) => acc + Number(item.value || 0), 0).toFixed(2)
+      items.reduce((acc, item) => acc + Number(item.value || 0), 0).toFixed(2),
     );
   }
 }
 
 export class FilteredSumStrategy implements TotalStrategy {
-  constructor(private readonly field: string, private readonly equals: any) {}
+  constructor(
+    private readonly field: string,
+    private readonly equals: any,
+  ) {}
 
   calculate(items: any[]): number {
     return Number(
       items
         .filter((i) => i[this.field] === this.equals)
         .reduce((acc, item) => acc + Number(item.value || 0), 0)
-        .toFixed(2)
+        .toFixed(2),
     );
   }
 }

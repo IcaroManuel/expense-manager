@@ -8,7 +8,13 @@ import { ExpensesModule } from './expenses/expenses.module';
 import { SummaryModule } from './summary/summary.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, BillingsModule, ExpensesModule, SummaryModule],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    BillingsModule,
+    ExpensesModule,
+    SummaryModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

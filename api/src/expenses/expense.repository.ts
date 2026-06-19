@@ -43,13 +43,21 @@ export class ExpenseRepository implements IExpenseRepository {
     });
   }
 
-  async listForMonth(userId: string, year: number, month: number): Promise<any[]> {
+  async listForMonth(
+    userId: string,
+    year: number,
+    month: number,
+  ): Promise<any[]> {
     return this.prisma.expense.findMany({
       where: this.getMonthFilter(userId, year, month),
     });
   }
 
-  async updateFields(userId: string, expenseId: string, fields: any): Promise<any> {
+  async updateFields(
+    userId: string,
+    expenseId: string,
+    fields: any,
+  ): Promise<any> {
     const exists = await this.findById(userId, expenseId);
     if (!exists) return null;
 

@@ -1,4 +1,13 @@
-import { Controller, Post, Get, Body, Res, UseGuards, UnauthorizedException, HttpCode } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Res,
+  UseGuards,
+  UnauthorizedException,
+  HttpCode,
+} from '@nestjs/common';
 import { type Response } from 'express';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -30,12 +39,17 @@ export class AuthController {
     response.cookie('session_token', token, {
       maxAge: 7 * 24 * 60 * 60 * 1000,
       httpOnly: true,
-      secure: false,       // false em dev (http)
+      secure: false, // false em dev (http)
       sameSite: 'lax',
       path: '/',
     });
 
-    return { id: user.id, email: user.email, name: user.name, picture: user.picture };
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      picture: user.picture,
+    };
   }
 
   @Post('register')
@@ -64,14 +78,24 @@ export class AuthController {
       path: '/',
     });
 
-    return { id: user.id, email: user.email, name: user.name, picture: user.picture };
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      picture: user.picture,
+    };
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async me(@CurrentUser() user: User) {
     const dbUser = await this.authService.findUserByEmail(user.email);
-    return { id: dbUser?.id, email: dbUser?.email, name: dbUser?.name, picture: dbUser?.picture };
+    return {
+      id: dbUser?.id,
+      email: dbUser?.email,
+      name: dbUser?.name,
+      picture: dbUser?.picture,
+    };
   }
 
   @Post('logout')

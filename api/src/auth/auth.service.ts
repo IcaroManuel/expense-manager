@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -10,14 +14,20 @@ export class AuthService {
   ) {}
 
   signToken(user: { id: string; email: string; name: string }): string {
-    return this.jwtService.sign({ sub: user.id, email: user.email, name: user.name });
+    return this.jwtService.sign({
+      sub: user.id,
+      email: user.email,
+      name: user.name,
+    });
   }
 
   async loginByEmailAndName(email: string, name: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      throw new UnauthorizedException('Usuário não encontrado. Faça o cadastro primeiro.');
+      throw new UnauthorizedException(
+        'Usuário não encontrado. Faça o cadastro primeiro.',
+      );
     }
 
     // Comparação case-insensitive do nome

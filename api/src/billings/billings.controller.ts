@@ -1,5 +1,22 @@
-import { Controller, Get, Post, Patch, Delete, Body, Query, Param, UseGuards, NotFoundException, HttpCode, ParseIntPipe } from '@nestjs/common';
-import { BillingsService, type BillingCreate, type BillingUpdate } from './billings.service';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Query,
+  Param,
+  UseGuards,
+  NotFoundException,
+  HttpCode,
+  ParseIntPipe,
+} from '@nestjs/common';
+import {
+  BillingsService,
+  type BillingCreate,
+  type BillingUpdate,
+} from './billings.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 
@@ -18,7 +35,10 @@ export class BillingsController {
   }
 
   @Post()
-  async createBilling(@Body() payload: BillingCreate, @CurrentUser() user: any) {
+  async createBilling(
+    @Body() payload: BillingCreate,
+    @CurrentUser() user: any,
+  ) {
     return this.billingsService.create(user.id, payload);
   }
 
@@ -30,7 +50,13 @@ export class BillingsController {
     @Query('month', ParseIntPipe) month: number,
     @CurrentUser() user: any,
   ) {
-    const updated = await this.billingsService.update(user.id, id, payload, year, month);
+    const updated = await this.billingsService.update(
+      user.id,
+      id,
+      payload,
+      year,
+      month,
+    );
     if (!updated) {
       throw new NotFoundException('Billing not found');
     }

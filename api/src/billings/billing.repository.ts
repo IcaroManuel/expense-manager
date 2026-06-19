@@ -32,13 +32,21 @@ export class BillingRepository implements IBillingRepository {
     });
   }
 
-  async listForMonth(userId: string, year: number, month: number): Promise<any[]> {
+  async listForMonth(
+    userId: string,
+    year: number,
+    month: number,
+  ): Promise<any[]> {
     return this.prisma.billing.findMany({
       where: this.getMonthFilter(userId, year, month),
     });
   }
 
-  async updateFields(userId: string, billingId: string, fields: any): Promise<any> {
+  async updateFields(
+    userId: string,
+    billingId: string,
+    fields: any,
+  ): Promise<any> {
     // Verifica se existe antes de atualizar para respeitar o isolamento de tenant (userId)
     const exists = await this.findById(userId, billingId);
     if (!exists) return null;

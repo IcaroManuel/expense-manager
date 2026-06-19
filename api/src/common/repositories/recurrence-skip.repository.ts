@@ -6,7 +6,13 @@ import { IRecurrenceSkipRepository } from '../../billings/billings.service';
 export class RecurrenceSkipRepository implements IRecurrenceSkipRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async addSkip(userId: string, entityKind: string, entityId: string, year: number, month: number): Promise<void> {
+  async addSkip(
+    userId: string,
+    entityKind: string,
+    entityId: string,
+    year: number,
+    month: number,
+  ): Promise<void> {
     await this.prisma.recurrenceSkip.upsert({
       where: {
         userId_entityKind_entityId_year_month: {
@@ -28,13 +34,24 @@ export class RecurrenceSkipRepository implements IRecurrenceSkipRepository {
     });
   }
 
-  async removeSkip(userId: string, entityKind: string, entityId: string, year: number, month: number): Promise<void> {
+  async removeSkip(
+    userId: string,
+    entityKind: string,
+    entityId: string,
+    year: number,
+    month: number,
+  ): Promise<void> {
     await this.prisma.recurrenceSkip.deleteMany({
       where: { userId, entityKind, entityId, year, month },
     });
   }
 
-  async listForMonth(userId: string, entityKind: string, year: number, month: number): Promise<string[]> {
+  async listForMonth(
+    userId: string,
+    entityKind: string,
+    year: number,
+    month: number,
+  ): Promise<string[]> {
     const skips = await this.prisma.recurrenceSkip.findMany({
       where: { userId, entityKind, year, month },
       select: { entityId: true },
@@ -42,7 +59,11 @@ export class RecurrenceSkipRepository implements IRecurrenceSkipRepository {
     return skips.map((skip: { entityId: string }) => skip.entityId);
   }
 
-  async deleteAllForEntity(userId: string, entityKind: string, entityId: string): Promise<void> {
+  async deleteAllForEntity(
+    userId: string,
+    entityKind: string,
+    entityId: string,
+  ): Promise<void> {
     await this.prisma.recurrenceSkip.deleteMany({
       where: { userId, entityKind, entityId },
     });
