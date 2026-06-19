@@ -28,15 +28,18 @@ import { formatBRL, BILLING_TYPE_LABEL } from "@/lib/format";
 import { createBilling, deleteBilling } from "@/lib/api";
 import { DASHBOARD, MODAL } from "@/constants/test-ids";
 import { Billing, BillingType } from "@/dtos/billing";
+import SummaryCards from "./SummaryCards";
+import { Summary } from "@/dtos/summary";
 
 export interface BillingsCardProps {
   billings: Billing[];
   year: number;
   month: number;
   onChanged?: () => void;
+  summary: Summary;
 }
 
-export default function BillingsCard({ billings, year, month, onChanged }: BillingsCardProps) {
+export default function BillingsCard({ billings, year, month, onChanged, summary }: BillingsCardProps) {
   const [open, setOpen] = useState(false);
 
   const [form, setForm] = useState({ name: "", type: "SALARY" as BillingType, value: "" });
@@ -87,7 +90,8 @@ export default function BillingsCard({ billings, year, month, onChanged }: Billi
   const total = billings.reduce((acc, b) => acc + Number(b.value || 0), 0);
 
   return (
-    <div className="bg-white border border-[#EAE7E1] rounded-2xl p-6">
+    <div className="">
+    <div className="bg-white border border-[#EAE7E1] rounded-2xl p-6 h-max">
       <div className="flex items-center justify-between">
         <div>
           <div className="text-eyebrow">Faturamento</div>
@@ -240,5 +244,9 @@ export default function BillingsCard({ billings, year, month, onChanged }: Billi
         </DialogContent>
       </Dialog>
     </div>
+
+    <SummaryCards summary={summary} />
+    </div>
+
   );
 }

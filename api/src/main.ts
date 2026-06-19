@@ -3,20 +3,16 @@ import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {cors: false});
 
-  // Configuração de CORS idêntica ao FastAPI
   app.enableCors({
-    origin: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : '*',
-    credentials: true,
+    origin: ['http://localhost:3000'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['*'],
+    credentials: true,
   });
 
-  // Habilita a leitura de cookies
   app.use(cookieParser());
 
-  // Rota raiz (Health Check)
   const httpAdapter = app.getHttpAdapter();
   httpAdapter.get('/', (req, res) => {
     res.send({ message: 'Gestor Financeiro API' });

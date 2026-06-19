@@ -1,5 +1,5 @@
-import { Controller, Post, Get, Body, Req, Res, UseGuards, UnauthorizedException, ForbiddenException, HttpCode } from '@nestjs/common';
-import { type Response, Request } from 'express';
+import { Controller, Post, Get, Body, Res, UseGuards, UnauthorizedException, HttpCode } from '@nestjs/common';
+import { type Response } from 'express';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CurrentUser } from './current-user.decorator';
@@ -9,55 +9,69 @@ import { type User } from '@prisma/client';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('session')
+  @Post('login')
   @HttpCode(200)
-  async createSession(@Body('session_id') sessionId: string, @Res({ passthrough: true }) response: Response) {
-    if (!sessionId) {
-      throw new UnauthorizedException('Invalid session payload');
+  async login(
+    @Body('email') email: string,
+    @Body('name') name: string,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    if (!email?.trim() || !name?.trim()) {
+      throw new UnauthorizedException('Email e nome são obrigatórios');
     }
 
-    const data = await this.authService.exchangeSessionId(sessionId) as { email: string; name?: string; picture?: string; session_token: string };
-    const email = (data.email || '').toLowerCase();
-    const name = data.name || '';
-    const picture = data.picture || '';
-    const sessionToken = data.session_token;
+    const user = await this.authService.loginByEmailAndName(
+      email.trim().toLowerCase(),
+      name.trim(),
+    );
 
-    if (!email || !sessionToken) {
-      throw new UnauthorizedException('Invalid session payload');
-    }
+    const token = this.authService.signToken(user);
 
-    if (!this.authService.isEmailAllowed(email)) {
-      throw new ForbiddenException('Acesso negado. Este e-mail não está autorizado a usar o aplicativo.');
-    }
-
-    const user = await this.authService.upsertUser(email, name, picture);
-
-    response.cookie('session_token', sessionToken, {
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias
+    response.cookie('session_token', token, {
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
+      secure: false,       // false em dev (http)
+      sameSite: 'lax',
       path: '/',
     });
 
-    return {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      picture: user.picture,
-    };
+    return { id: user.id, email: user.email, name: user.name, picture: user.picture };
+  }
+
+  @Post('register')
+  @HttpCode(201)
+  async register(
+    @Body('email') email: string,
+    @Body('name') name: string,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    if (!email?.trim() || !name?.trim()) {
+      throw new UnauthorizedException('Email e nome são obrigatórios');
+    }
+
+    const user = await this.authService.registerUser(
+      email.trim().toLowerCase(),
+      name.trim(),
+    );
+
+    const token = this.authService.signToken(user);
+
+    response.cookie('session_token', token, {
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      path: '/',
+    });
+
+    return { id: user.id, email: user.email, name: user.name, picture: user.picture };
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async me(@CurrentUser() user: User) {
     const dbUser = await this.authService.findUserByEmail(user.email);
-    return {
-      id: dbUser?.id,
-      email: dbUser?.email,
-      name: dbUser?.name,
-      picture: dbUser?.picture,
-    };
+    return { id: dbUser?.id, email: dbUser?.email, name: dbUser?.name, picture: dbUser?.picture };
   }
 
   @Post('logout')

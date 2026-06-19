@@ -32,8 +32,10 @@ api.interceptors.response.use(
 
 // Auth
 export const fetchMe = () => api.get("/auth/me").then((r) => r.data);
-export const exchangeSession = (sessionId: string) =>
-  api.post("/auth/session", { session_id: sessionId }).then((r) => r.data);
+export const loginApi = (email: string, name: string) =>
+  api.post("/auth/login", { email, name }).then((r) => r.data);
+export const registerApi = (email: string, name: string) =>
+  api.post("/auth/register", { email, name }).then((r) => r.data);
 export const logoutApi = () => api.post("/auth/logout").then((r) => r.data);
 
 // Billings

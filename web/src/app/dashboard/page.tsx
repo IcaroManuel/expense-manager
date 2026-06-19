@@ -22,11 +22,11 @@ export default function Dashboard() {
   const { user, logout, loading } = useAuth();
   const router = useRouter();
 
-    // useEffect(() => {
-    //   if (!loading && !user) {
-    //     router.replace("/login");
-    //   }
-    // }, [user, loading, router]);
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/login");
+    }
+  }, [user, loading, router]);
 
   const refresh = useCallback(async () => {
     const [b, e, s] = await Promise.all([
@@ -50,96 +50,89 @@ export default function Dashboard() {
 
   return (
     <>
-    <div>
-      {loading ? <div className="min-h-screen flex items-center justify-center">Carregando...</div> : null}
-    </div>
-    <div data-testid={DASHBOARD.root} className="min-h-screen bg-[#F9F8F6] text-[#1C1C19]">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-[#EAE7E1]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#2D4238] text-white flex items-center justify-center">
-              <Wallet size={18} />
-            </div>
-            <div>
-              <div className="text-eyebrow leading-none">Gestor Financeiro</div>
-              <div className="font-display text-base font-semibold leading-tight">
-                Painel mensal
+      <div>
+        {loading ? <div className="min-h-screen flex items-center justify-center">Carregando...</div> : null}
+      </div>
+      <div data-testid={DASHBOARD.root} className="min-h-screen bg-[#F9F8F6] text-[#1C1C19]">
+        {/* Header */}
+        <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-[#EAE7E1]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#2D4238] text-white flex items-center justify-center">
+                <Wallet size={18} />
+              </div>
+              <div>
+                <div className="text-eyebrow leading-none">Gestor Financeiro</div>
+                <div className="font-display text-base font-semibold leading-tight">
+                  Painel mensal
+                </div>
               </div>
             </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <MonthSelector year={year} month={month} onChange={onMonthChange} />
-            <div className="hidden md:flex items-center gap-3 pl-4 border-l border-[#EAE7E1]">
-              {user?.picture ? (
-                <img
-                  src={user.picture}
-                  alt={user?.name || "Usuário"}
-                  className="w-9 h-9 rounded-full object-cover border border-[#EAE7E1]"
-                  data-testid="user-avatar"
-                />
-              ) : (
-                <div className="w-9 h-9 rounded-full bg-[#F3F1ED] flex items-center justify-center text-sm font-semibold text-[#2D4238]">
-                  {(user?.name || "?").charAt(0).toUpperCase()}
+            <div className="flex items-center gap-4">
+              <MonthSelector year={year} month={month} onChange={onMonthChange} />
+              <div className="hidden md:flex items-center gap-3 pl-4 border-l border-[#EAE7E1]">
+                {user?.picture ? (
+                  <img
+                    src={user.picture}
+                    alt={user?.name || "Usuário"}
+                    className="w-9 h-9 rounded-full object-cover border border-[#EAE7E1]"
+                    data-testid="user-avatar"
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-[#F3F1ED] flex items-center justify-center text-sm font-semibold text-[#2D4238]">
+                    {(user?.name || "?").charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="text-right min-w-0">
+                  <div
+                    data-testid="user-name"
+                    className="font-display text-sm font-semibold truncate max-w-[140px]"
+                  >
+                    {user?.name}
+                  </div>
+                  <div className="text-[11px] text-[#6B6A65] truncate max-w-[140px]">
+                    {user?.email}
+                  </div>
                 </div>
-              )}
-              <div className="text-right min-w-0">
-                <div
-                  data-testid="user-name"
-                  className="font-display text-sm font-semibold truncate max-w-[140px]"
+                <button
+                  data-testid="logout-btn"
+                  onClick={logout}
+                  className="w-9 h-9 rounded-full border border-[#EAE7E1] flex items-center justify-center hover:bg-[#F3F1ED] text-[#6B6A65] transition-colors"
+                  aria-label="Sair"
+                  title="Sair"
                 >
-                  {user?.name}
-                </div>
-                <div className="text-[11px] text-[#6B6A65] truncate max-w-[140px]">
-                  {user?.email}
-                </div>
+                  <LogOut size={16} />
+                </button>
               </div>
-              <button
-                data-testid="logout-btn"
-                onClick={logout}
-                className="w-9 h-9 rounded-full border border-[#EAE7E1] flex items-center justify-center hover:bg-[#F3F1ED] text-[#6B6A65] transition-colors"
-                aria-label="Sair"
-                title="Sair"
-              >
-                <LogOut size={16} />
-              </button>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        <section className="space-y-2">
-          <div className="text-eyebrow">Visão geral</div>
-          <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight leading-tight">
-            Suas finanças, no controle.
-          </h1>
-          <p className="text-[#6B6A65] max-w-xl text-sm sm:text-base">
-            Acompanhe entradas, saídas e o quanto da sua renda está comprometida — mês a mês, com
-            histórico permanente.
-          </p>
-        </section>
+        <main className="px-4 sm:px-6 lg:px-8 space-y-6">
+          <section className="space-y-2">
+            <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight leading-tight">
+              Suas finanças, no controle.
+            </h1>
+            <p className="text-[#6B6A65] text-sm sm:text-base">
+              Acompanhe entradas, saídas e o quanto da sua renda está comprometida — mês a mês, com
+              histórico permanente.
+            </p>
+          </section>
 
-        <SummaryCards summary={summary} />
+          {/* NOVA ORGANIZAÇÃO DO LAYOUT */}
 
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+          {/* Entradas e Saídas Lado a Lado */}
+          <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <BillingsCard billings={billings} year={year} month={month} onChanged={refresh} summary={summary} />
+            <ExpensesCard expenses={expenses} year={year} month={month} onChanged={refresh} />
             <SpendingChart summary={summary} />
-          </div>
-          <div className="lg:col-span-1">
-            <BillingsCard billings={billings} year={year} month={month} onChanged={refresh} />
-          </div>
-        </section>
+          </section>
 
-        <section>
-          <ExpensesCard expenses={expenses} year={year} month={month} onChanged={refresh} />
-        </section>
-
-        <footer className="text-center text-xs text-[#9A9892] py-6">
-          Sincronizado · dados persistidos com ACID a nível de documento
-        </footer>
-      </main>
-    </div>
+          <footer className="text-center text-xs text-[#9A9892] py-6">
+            Sincronizado · dados persistidos com ACID a nível de documento
+          </footer>
+        </main>
+      </div>
     </>
   );
 }

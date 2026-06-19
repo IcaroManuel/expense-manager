@@ -1,66 +1,49 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
-import axios from 'axios';
-
-const EMERGENT_SESSION_DATA_URL = 'https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data';
-const SESSION_TTL_DAYS = 7;
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+  ) {}
 
-  private allowedEmails(): Set<string> {
-    const raw = process.env.ALLOWED_EMAILS || '';
-    const emails = raw.split(',').map(e => e.trim().toLowerCase()).filter(e => e);
-    return new Set(emails);
+  signToken(user: { id: string; email: string; name: string }): string {
+    return this.jwtService.sign({ sub: user.id, email: user.email, name: user.name });
   }
 
-  isEmailAllowed(email: string): boolean {
-    const allowed = this.allowedEmails();
-    if (allowed.size === 0) return true; // Allowlist desabilitada
-    return allowed.has(email.toLowerCase());
+  async loginByEmailAndName(email: string, name: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      throw new UnauthorizedException('Usuário não encontrado. Faça o cadastro primeiro.');
+    }
+
+    // Comparação case-insensitive do nome
+    if (user.name.trim().toLowerCase() !== name.toLowerCase()) {
+      throw new UnauthorizedException('Nome incorreto para este email.');
+    }
+
+    return user;
   }
 
-  async exchangeSessionId(sessionId: string): Promise<any> {
-    try {
-      const resp = await axios.get(EMERGENT_SESSION_DATA_URL, {
-        headers: { 'X-Session-ID': sessionId },
-        timeout: 20000,
-      });
-      return resp.data;
-    } catch (error) {
-      throw new UnauthorizedException({
-        message: 'Sessão inválida ou expirada',
-        code: 'INVALID_SESSION',
-      });
-    }
-  }
+  async registerUser(email: string, name: string) {
+    const existing = await this.prisma.user.findUnique({ where: { email } });
 
-  async upsertUser(email: string, name: string, picture?: string) {
-    if (!this.isEmailAllowed(email)) {
-      throw new UnauthorizedException({
-        message: 'Email não autorizado',
-        code: 'UNAUTHORIZED_EMAIL',
-      });
+    if (existing) {
+      throw new ConflictException('Email já cadastrado. Faça o login.');
     }
 
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (existingUser) {
-      return this.prisma.user.update({
-        where: { email },
-        data: { name, picture },
-      });
-    }
-
-    return this.prisma.user.create({
-      data: { email, name, picture },
-    });
+    return this.prisma.user.create({ data: { email, name } });
   }
 
   async findUserByEmail(email: string) {
     return this.prisma.user.findUnique({ where: { email } });
+  }
+
+  // Mantido para compatibilidade com o guard
+  isEmailAllowed(_email: string): boolean {
+    return true;
   }
 }

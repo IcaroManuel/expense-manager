@@ -53,7 +53,7 @@ export default function SummaryCards({ summary }: SummaryCardsProps) {
   const balancePositive = summary.balance >= 0;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 gap-4 mt-6">
       <Card
         testId={DASHBOARD.summaryIncome}
         label="Total de entradas"
