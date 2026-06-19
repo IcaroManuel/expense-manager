@@ -1,9 +1,26 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, BadRequestException } from '@nestjs/common';
 import { EventHub } from '../common/patterns/event-hub';
 import { type IRecurrenceSkipRepository, SKIP_REPOSITORY } from '../billings/billings.service';
 
-export interface ExpenseCreate { name: string; type: string; status: string; color?: string; value: number; year: number; month: number; }
-export interface ExpenseUpdate { name?: string; value?: number; status?: string; color?: string; }
+export interface ExpenseCreate {
+  name: string;
+  type: string;
+  status: string;
+  color?: string;
+  value: number;
+  year: number;
+  month: number;
+  endYear?: number | null;
+  endMonth?: number | null;
+}
+export interface ExpenseUpdate {
+  name?: string;
+  value?: number;
+  status?: string;
+  color?: string;
+  endYear?: number | null;
+  endMonth?: number | null;
+}
 
 export const EXPENSE_REPOSITORY = 'EXPENSE_REPOSITORY';
 export interface IExpenseRepository {
@@ -14,7 +31,8 @@ export interface IExpenseRepository {
   delete(userId: string, expenseId: string): Promise<void>;
 }
 
-const RECURRING_EXPENSE_TYPES = ['FIXED'];
+// Cartão agora também é recorrente (corrige inconsistência com domain/enums.ts)
+const RECURRING_EXPENSE_TYPES = ['FIXED', 'CARD'];
 const PENDING_STATUS = 'PENDING';
 
 @Injectable()
@@ -38,6 +56,8 @@ export class ExpensesService {
       status: doc.status || PENDING_STATUS,
       color: doc.color || '#2D4238',
       recurring: doc.recurring || false,
+      endYear: doc.endYear ?? null,
+      endMonth: doc.endMonth ?? null,
       year,
       month,
       created_at: doc.created_at || this.nowIso(),
@@ -64,6 +84,14 @@ export class ExpensesService {
   async create(userId: string, payload: ExpenseCreate): Promise<any> {
     const isRecurring = RECURRING_EXPENSE_TYPES.includes(payload.type);
 
+    if (isRecurring && payload.endYear != null && payload.endMonth != null) {
+      const endIndex = payload.endYear * 12 + payload.endMonth;
+      const startIndex = payload.year * 12 + payload.month;
+      if (endIndex < startIndex) {
+        throw new BadRequestException('A data de término não pode ser anterior ao mês inicial.');
+      }
+    }
+
     const expense = {
       id: crypto.randomUUID(),
       userId,
@@ -75,6 +103,8 @@ export class ExpensesService {
       recurring: isRecurring,
       startYear: isRecurring ? payload.year : null,
       startMonth: isRecurring ? payload.month : null,
+      endYear: isRecurring ? (payload.endYear ?? null) : null,
+      endMonth: isRecurring ? (payload.endMonth ?? null) : null,
       year: isRecurring ? null : payload.year,
       month: isRecurring ? null : payload.month,
     };
@@ -86,11 +116,13 @@ export class ExpensesService {
   }
 
   async update(userId: string, expenseId: string, payload: ExpenseUpdate, year: number, month: number): Promise<any | null> {
-    const fields: any = { updated_at: this.nowIso() };
+    const fields: any = {};
     if (payload.name !== undefined) fields.name = payload.name;
     if (payload.value !== undefined) fields.value = payload.value;
     if (payload.status !== undefined) fields.status = payload.status;
     if (payload.color !== undefined) fields.color = payload.color;
+    if (payload.endYear !== undefined) fields.endYear = payload.endYear;
+    if (payload.endMonth !== undefined) fields.endMonth = payload.endMonth;
 
     const updated = await this.repo.updateFields(userId, expenseId, fields);
     if (!updated) return null;
@@ -109,10 +141,7 @@ export class ExpensesService {
       await this.repo.delete(userId, expenseId);
     }
 
-    this.hub.publish({
-      name: 'expense.deleted',
-      payload: { id: expenseId, year, month },
-    });
+    this.hub.publish({ name: 'expense.deleted', payload: { id: expenseId, year, month } });
     return true;
   }
 

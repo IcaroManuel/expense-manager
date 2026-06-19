@@ -61,7 +61,7 @@ export default function SpendingChart({ summary }: SpendingChartProps) {
   const buckets = summary.expensesByType || [];
 
   // Tipando explicitamente o array de ordem para garantir o tipo no .map
-  const order: ExpenseType[] = ["FIXED", "CARD", "DETACHED"];
+  const order: ExpenseType[] = ["FIXED", "CARD"];
 
   const data = order.map((t) => {
     const found = buckets.find((b) => b.type === t);
@@ -137,7 +137,7 @@ export default function SpendingChart({ summary }: SpendingChartProps) {
         )}
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-2">
+      <div className="mt-4 grid grid-cols-2 gap-2">
         {data.map((d) => (
           <div key={d.type} className="rounded-xl bg-[#F9F8F6] border border-[#EAE7E1] px-3 py-2">
             <div className="text-[10px] uppercase tracking-wider text-[#6B6A65]">{d.label}</div>

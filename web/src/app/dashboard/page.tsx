@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { LogOut, Wallet } from "lucide-react";
 import MonthSelector from "@/components/dashboard/MonthSelector";
-import SummaryCards from "@/components/dashboard/SummaryCards";
 import BillingsCard from "@/components/dashboard/BillingsCard";
 import ExpensesCard from "@/components/dashboard/ExpensesCard";
 import SpendingChart from "@/components/dashboard/SpendingChart";
@@ -54,9 +53,8 @@ export default function Dashboard() {
         {loading ? <div className="min-h-screen flex items-center justify-center">Carregando...</div> : null}
       </div>
       <div data-testid={DASHBOARD.root} className="min-h-screen bg-[#F9F8F6] text-[#1C1C19]">
-        {/* Header */}
         <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-[#EAE7E1]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+          <div className="mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-[#2D4238] text-white flex items-center justify-center">
                 <Wallet size={18} />
@@ -110,7 +108,7 @@ export default function Dashboard() {
 
         <main className="px-4 sm:px-6 lg:px-8 space-y-6">
           <section className="space-y-2">
-            <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight leading-tight">
+            <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight leading-tight mt-4">
               Suas finanças, no controle.
             </h1>
             <p className="text-[#6B6A65] text-sm sm:text-base">
@@ -119,18 +117,11 @@ export default function Dashboard() {
             </p>
           </section>
 
-          {/* NOVA ORGANIZAÇÃO DO LAYOUT */}
-
-          {/* Entradas e Saídas Lado a Lado */}
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <BillingsCard billings={billings} year={year} month={month} onChanged={refresh} summary={summary} />
             <ExpensesCard expenses={expenses} year={year} month={month} onChanged={refresh} />
             <SpendingChart summary={summary} />
           </section>
-
-          <footer className="text-center text-xs text-[#9A9892] py-6">
-            Sincronizado · dados persistidos com ACID a nível de documento
-          </footer>
         </main>
       </div>
     </>

@@ -24,15 +24,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import {
-  formatBRL,
-  EXPENSE_TYPE_LABEL,
-  EXPENSE_STATUS_LABEL,
-  EXPENSE_COLOR_PALETTE,
-} from "@/lib/format";
 import { createExpense, deleteExpense, updateExpense } from "@/lib/api";
 import { DASHBOARD, MODAL } from "@/constants/test-ids";
 import { Expense, ExpenseStatus, ExpenseType } from "@/dtos/expense";
+import { formatBRL, EXPENSE_TYPE_LABEL, EXPENSE_STATUS_LABEL, EXPENSE_COLOR_PALETTE, MONTHS_PT, MONTH_SHORT_PT } from "@/lib/format";
 
 export interface ExpensesCardProps {
   expenses: Expense[];
@@ -48,16 +43,22 @@ interface ExpenseFormState {
   value: string;
   status: ExpenseStatus;
   color: string;
+  hasEndDate: boolean;
+  endYear: string;
+  endMonth: string;
 }
 
 const DEFAULT_COLOR = EXPENSE_COLOR_PALETTE[0].value;
 const EMPTY: ExpenseFormState = {
   id: null,
-  name: "",
-  type: "FIXED",
-  value: "",
-  status: "PENDING",
-  color: DEFAULT_COLOR,
+   name: "",
+   type: "FIXED",
+   value: "",
+   status: "PENDING",
+   color: DEFAULT_COLOR,
+   hasEndDate: false,
+   endYear: "",
+   endMonth: "",
 };
 
 export default function ExpensesCard({ expenses, year, month, onChanged }: ExpensesCardProps) {
@@ -83,9 +84,14 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
       value: String(expense.value),
       status: expense.status,
       color: expense.color || DEFAULT_COLOR,
+      hasEndDate: !!(expense.endYear && expense.endMonth),
+      endYear: expense.endYear ? String(expense.endYear) : "",
+      endMonth: expense.endMonth ? String(expense.endMonth) : "",
     });
     setOpen(true);
   };
+
+  const isRecurringType = form.type === "FIXED" || form.type === "CARD";
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -94,6 +100,18 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
       toast.error("Preencha nome e valor (> 0).");
       return;
     }
+
+    let endYear: number | null = null;
+    let endMonth: number | null = null;
+    if (isRecurringType && form.hasEndDate) {
+      if (!form.endYear || !form.endMonth) {
+        toast.error("Selecione mês e ano de término.");
+        return;
+      }
+      endYear = parseInt(form.endYear, 10);
+      endMonth = parseInt(form.endMonth, 10);
+    }
+
     setSubmitting(true);
     try {
       if (form.id) {
@@ -104,6 +122,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
             value,
             status: form.status,
             color: form.color,
+            ...(isRecurringType ? { endYear, endMonth } : {}),
           },
           year,
           month,
@@ -118,13 +137,14 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
           color: form.color,
           year,
           month,
+          ...(isRecurringType ? { endYear, endMonth } : {}),
         });
         toast.success("Despesa adicionada");
       }
       setOpen(false);
       onChanged?.();
-    } catch (err) {
-      toast.error("Erro ao salvar");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Erro ao salvar");
     } finally {
       setSubmitting(false);
     }
@@ -177,7 +197,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
         </button>
       </div>
 
-      <ul data-testid={DASHBOARD.expenseList} className="mt-6 divide-y divide-[#EAE7E1]">
+      <ul data-testid={DASHBOARD.expenseList} className="divide-y divide-[#EAE7E1]">
         {expenses.length === 0 && (
           <li className="py-10 text-center text-sm text-[#9A9892]">
             Nenhuma despesa registrada neste mês.
@@ -287,8 +307,10 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
                 <Label>Tipo</Label>
                 <Select
                   value={form.type}
-                  onValueChange={(v: ExpenseType) => setForm((f) => ({ ...f, type: v }))}
-                  disabled={!!form.id}
+                    onValueChange={(v: ExpenseType) =>
+                      setForm((f) => ({ ...f, type: v, hasEndDate: v === "DETACHED" ? false : f.hasEndDate }))
+                    }
+                    disabled={!!form.id}
                 >
                   <SelectTrigger data-testid={MODAL.expenseType}>
                     <SelectValue />
@@ -327,6 +349,51 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
                 </SelectContent>
               </Select>
             </div>
+
+            {isRecurringType && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Data de término</Label>
+                  <button
+                    type="button"
+                    data-testid="expense-toggle-end-date"
+                    onClick={() =>
+                      setForm((f) => ({ ...f, hasEndDate: !f.hasEndDate, endYear: "", endMonth: "" }))
+                    }
+                    className="text-xs font-medium text-[#2D4238] hover:underline"
+                  >
+                    {form.hasEndDate ? "Remover término" : "Definir término"}
+                  </button>
+                </div>
+                {form.hasEndDate ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    <Select value={form.endMonth} onValueChange={(v) => setForm((f) => ({ ...f, endMonth: v }))}>
+                      <SelectTrigger data-testid="expense-end-month-select">
+                        <SelectValue placeholder="Mês" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MONTHS_PT.map((label, idx) => (
+                          <SelectItem key={idx + 1} value={String(idx + 1)}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      data-testid="expense-end-year-input"
+                      inputMode="numeric"
+                      value={form.endYear}
+                      onChange={(e) => setForm((f) => ({ ...f, endYear: e.target.value.replace(/\D/g, "") }))}
+                      placeholder="Ano (ex: 2026)"
+                    />
+                  </div>
+                ) : (
+                  <p className="text-xs text-[#9A9892]">
+                    Sem data definida, a despesa se repete indefinidamente todos os meses.
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Cor da despesa (gráfico)</Label>

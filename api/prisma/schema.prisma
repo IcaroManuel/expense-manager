@@ -51,6 +51,8 @@ model Expense {
   recurring   Boolean       @default(false)
   startYear   Int?
   startMonth  Int?
+  endYear     Int?
+  endMonth    Int?
   year        Int?
   month       Int?
   createdAt   DateTime      @default(now())

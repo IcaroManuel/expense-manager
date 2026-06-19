@@ -89,7 +89,7 @@ export class BillingsService {
   }
 
   async update(userId: string, billingId: string, payload: BillingUpdate, year: number, month: number): Promise<any | null> {
-    const fields: any = { updated_at: this.nowIso() };
+    const fields: any = {};
     if (payload.name !== undefined) fields.name = payload.name;
     if (payload.value !== undefined) fields.value = payload.value;
 

@@ -13,9 +13,20 @@ export class ExpenseRepository implements IExpenseRepository {
         { recurring: false, year, month },
         {
           recurring: true,
-          OR: [
-            { startYear: { lt: year } },
-            { startYear: year, startMonth: { lte: month } },
+          AND: [
+            {
+              OR: [
+                { startYear: { lt: year } },
+                { startYear: year, startMonth: { lte: month } },
+              ],
+            },
+            {
+              OR: [
+                { endYear: null },
+                { endYear: { gt: year } },
+                { endYear: year, endMonth: { gte: month } },
+              ],
+            },
           ],
         },
       ],

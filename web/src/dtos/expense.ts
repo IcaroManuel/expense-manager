@@ -1,7 +1,6 @@
 export type ExpenseType = "FIXED" | "CARD" | "DETACHED";
 export type ExpenseStatus = "PENDING" | "PAID";
 
-
 export interface Expense {
   id: string;
   name: string;
@@ -10,4 +9,6 @@ export interface Expense {
   status: ExpenseStatus;
   color?: string;
   recurring?: boolean;
+  endYear?: number | null;
+  endMonth?: number | null;
 }
