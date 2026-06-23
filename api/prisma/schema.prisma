@@ -17,6 +17,8 @@ model User {
   billings        Billing[]
   expenses        Expense[]
   recurrenceSkips RecurrenceSkip[]
+  balanceSnapshots       BalanceSnapshot[]
+  investmentTransactions InvestmentTransaction[]
 
   @@map("users")
 }
@@ -39,7 +41,6 @@ model Billing {
 
   @@map("billings")
 }
-
 
 model Expense {
   id          String        @id @default(uuid())
@@ -74,10 +75,40 @@ model RecurrenceSkip {
 
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Equivalente ao índice único para o Upsert funcionar no Prisma
   @@unique([userId, entityKind, entityId, year, month])
   @@map("recurrence_skips")
+}
+
+model BalanceSnapshot {
+  id        String   @id @default(uuid())
+  value     Decimal  @db.Decimal(10, 2)
+  year      Int
+  month     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, year, month])
+  @@map("balance_snapshots")
+}
+
+model InvestmentTransaction {
+  id        String          @id @default(uuid())
+  type      TransactionType
+  value     Decimal         @db.Decimal(10, 2)
+  year      Int
+  month     Int
+  day       Int
+  note      String?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("investment_transactions")
 }
 
 enum BillingType {
@@ -94,4 +125,9 @@ enum ExpenseType {
 enum ExpenseStatus {
   PAID
   PENDING
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
 }

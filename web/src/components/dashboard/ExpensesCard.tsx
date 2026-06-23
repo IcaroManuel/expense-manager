@@ -27,7 +27,7 @@ import { toast } from "sonner";
 import { createExpense, deleteExpense, updateExpense } from "@/lib/api";
 import { DASHBOARD, MODAL } from "@/constants/test-ids";
 import { Expense, ExpenseStatus, ExpenseType } from "@/dtos/expense";
-import { formatBRL, EXPENSE_TYPE_LABEL, EXPENSE_STATUS_LABEL, EXPENSE_COLOR_PALETTE, MONTHS_PT, MONTH_SHORT_PT } from "@/lib/format";
+import { formatBRL, EXPENSE_TYPE_LABEL, EXPENSE_STATUS_LABEL, EXPENSE_COLOR_PALETTE, MONTHS_PT, MONTH_SHORT_PT, parseBRLInput } from "@/lib/format";
 
 export interface ExpensesCardProps {
   expenses: Expense[];
@@ -95,7 +95,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const value = parseFloat(form.value.toString().replace(",", "."));
+    const value = parseBRLInput(form.value);
     if (!form.name.trim() || !value || value <= 0) {
       toast.error("Preencha nome e valor (> 0).");
       return;

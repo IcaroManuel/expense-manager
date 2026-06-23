@@ -39,3 +39,35 @@ export const MODAL = {
   expenseSubmit: "expense-submit-btn",
   expenseCancel: "expense-cancel-btn",
 } as const;
+
+export const NAV = {
+  dashboardLink: "nav-link-dashboard",
+  investmentsLink: "nav-link-investments",
+} as const;
+
+export const INVESTMENTS = {
+  root: "investments-root",
+  pendingBanner: "investments-pending-banner",
+  cardTotal: "investments-card-total",
+  cardInvested: "investments-card-invested",
+  cardYield: "investments-card-yield",
+  addTransactionBtn: "investments-add-transaction-btn",
+  updateBalanceBtn: "investments-update-balance-btn",
+  transactionList: "investments-transaction-list",
+  transactionDelete: (id: string) => `investments-transaction-delete-${id}`,
+  chart: "investments-yield-chart",
+} as const;
+
+export const INVESTMENT_MODAL = {
+  transactionDialog: "investment-transaction-modal",
+  transactionType: "investment-transaction-type-select",
+  transactionValue: "investment-transaction-value-input",
+  transactionDate: "investment-transaction-date-input",
+  transactionNote: "investment-transaction-note-input",
+  transactionSubmit: "investment-transaction-submit-btn",
+  transactionCancel: "investment-transaction-cancel-btn",
+  balanceDialog: "investment-balance-modal",
+  balanceValue: "investment-balance-value-input",
+  balanceSubmit: "investment-balance-submit-btn",
+  balanceCancel: "investment-balance-cancel-btn",
+} as const;

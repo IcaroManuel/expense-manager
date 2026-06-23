@@ -53,3 +53,23 @@ export const EXPENSE_COLOR_PALETTE = [
   { value: "#0F172A", label: "Carvão" },
   { value: "#9A9892", label: "Cinza" },
 ] as const;
+
+export const TRANSACTION_TYPE_LABEL: Record<string, string> = {
+  DEPOSIT: "Depósito",
+  WITHDRAWAL: "Retirada",
+};
+
+export const monthYearLabel = (year: number, month: number): string =>
+  `${MONTH_SHORT_PT[month - 1]}/${year}`;
+
+export function parseBRLInput(input: string): number {
+  const trimmed = input.trim();
+
+  if (trimmed.includes(",") && trimmed.includes(".")) {
+    return parseFloat(trimmed.replace(/\./g, "").replace(",", "."));
+  }
+  if (trimmed.includes(",")) {
+    return parseFloat(trimmed.replace(",", "."));
+  }
+  return parseFloat(trimmed);
+}

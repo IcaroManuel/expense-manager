@@ -24,7 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { formatBRL, BILLING_TYPE_LABEL } from "@/lib/format";
+import { formatBRL, BILLING_TYPE_LABEL, parseBRLInput } from "@/lib/format";
 import { createBilling, deleteBilling } from "@/lib/api";
 import { DASHBOARD, MODAL } from "@/constants/test-ids";
 import { Billing, BillingType } from "@/dtos/billing";
@@ -49,7 +49,7 @@ export default function BillingsCard({ billings, year, month, onChanged, summary
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const value = parseFloat(form.value.toString().replace(",", "."));
+    const value = parseBRLInput(form.value);
 
     if (!form.name.trim() || !value || value <= 0) {
       toast.error("Preencha nome e valor (> 0).");
