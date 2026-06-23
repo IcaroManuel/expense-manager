@@ -49,6 +49,16 @@ function dateIndex(year: number, month: number, day = 1): number {
   return year * 372 + month * 31 + day;
 }
 
+// O snapshot só guarda year/month (sem dia), mas é criado em um dia específico do mês.
+// Usamos o createdAt real para saber em que dia do mês ele foi registrado, em vez de
+// assumir erroneamente que ele representa o fim do mês (dia 31). Isso evita tratar
+// depósitos feitos DEPOIS do snapshot, mas no mesmo mês, como se já estivessem
+// incluídos no valor informado.
+function snapshotDateIndex(snapshot: { year: number; month: number; createdAt?: Date | string }): number {
+  const day = snapshot.createdAt ? new Date(snapshot.createdAt).getDate() : 28;
+  return dateIndex(snapshot.year, snapshot.month, day);
+}
+
 @Injectable()
 export class InvestmentsService {
   constructor(
@@ -92,7 +102,7 @@ export class InvestmentsService {
 
     const first = allSnapshots[0];
     const last = allSnapshots[allSnapshots.length - 1];
-    const lastIndex = dateIndex(last.year, last.month, 31); // fim do mês do último snapshot
+    const lastIndex = snapshotDateIndex(last); // dia real em que o último snapshot foi registrado
 
     const transactionsAfterLast = allTransactions.filter(
       (t) => dateIndex(t.year, t.month, t.day) > lastIndex,
@@ -135,8 +145,8 @@ export class InvestmentsService {
     for (let i = 1; i < allSnapshots.length; i++) {
       const prev = allSnapshots[i - 1];
       const curr = allSnapshots[i];
-      const prevIndex = dateIndex(prev.year, prev.month, 31);
-      const currIndex = dateIndex(curr.year, curr.month, 31);
+      const prevIndex = snapshotDateIndex(prev);
+      const currIndex = snapshotDateIndex(curr);
 
       const between = allTransactions.filter((t) => {
         const idx = dateIndex(t.year, t.month, t.day);
