@@ -7,6 +7,7 @@ import { BillingsModule } from './billings/billings.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { SummaryModule } from './summary/summary.module';
 import { InvestmentsModule } from './investments/investments.module';
+import { NfseModule } from './nfse/nfse.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { InvestmentsModule } from './investments/investments.module';
     ExpensesModule,
     SummaryModule,
     InvestmentsModule,
+    NfseModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -131,3 +131,18 @@ enum TransactionType {
   DEPOSIT
   WITHDRAWAL
 }
+
+model NfseEmission {
+  id           String   @id @default(uuid())
+  year         Int
+  month        Int
+  numeroDps    String
+  status       String   // PROCESSING | SUCCESS | FAILED
+  chaveAcesso  String?
+  rawResponse  Json?
+  errorMessage String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([year, month], name: "year_month")
+}
