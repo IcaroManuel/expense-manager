@@ -14,6 +14,18 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 import { CurrentUser } from './current-user.decorator';
 import { type User } from '@prisma/client';
 
+const isProd = process.env.NODE_ENV === 'production';
+
+function sessionCookieOptions() {
+  return {
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    secure: isProd, // true em produção (cookie só viaja em HTTPS)
+    sameSite: (isProd ? 'none' : 'lax') as 'none' | 'lax', // 'none' pq front e back são domínios diferentes
+    path: '/',
+  };
+}
+
 @Controller('api/auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -36,13 +48,7 @@ export class AuthController {
 
     const token = this.authService.signToken(user);
 
-    response.cookie('session_token', token, {
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      httpOnly: true,
-      secure: false, // false em dev (http)
-      sameSite: 'lax',
-      path: '/',
-    });
+    response.cookie('session_token', token, sessionCookieOptions());
 
     return {
       id: user.id,
@@ -70,13 +76,7 @@ export class AuthController {
 
     const token = this.authService.signToken(user);
 
-    response.cookie('session_token', token, {
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-      path: '/',
-    });
+    response.cookie('session_token', token,sessionCookieOptions());
 
     return {
       id: user.id,
@@ -101,7 +101,11 @@ export class AuthController {
   @Post('logout')
   @HttpCode(200)
   async logout(@Res({ passthrough: true }) response: Response) {
-    response.clearCookie('session_token', { path: '/' });
+    response.clearCookie('session_token', {
+      path: '/',
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
+    });
     return { ok: true };
   }
 }
