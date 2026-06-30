@@ -30,11 +30,14 @@ api.interceptors.response.use(
 );
 
 export const fetchMe = () => api.get("/auth/me").then((r) => r.data);
-export const loginApi = (email: string, name: string) =>
-  api.post("/auth/login", { email, name }).then((r) => r.data);
-export const registerApi = (email: string, name: string) =>
-  api.post("/auth/register", { email, name }).then((r) => r.data);
-export const logoutApi = () => api.post("/auth/logout").then((r) => r.data);
+export const loginApi = (email: string, password: string) =>
+  api.post("/auth/login", { email, password }).then((r) => r.data);
+
+export const registerApi = (email: string, name: string, password: string) =>
+  api.post("/auth/register", { email, name, password }).then((r) => r.data);
+
+export const setInitialPasswordApi = (email: string, name: string, password: string) =>
+  api.post("/auth/set-initial-password", { email, name, password }).then((r) => r.data);
 
 export const exchangeSession = (sessionId: string) =>
   api.post("/auth/session", { session_id: sessionId }).then((r) => r.data);

@@ -7,6 +7,8 @@ import { BillingsModule } from './billings/billings.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { SummaryModule } from './summary/summary.module';
 import { InvestmentsModule } from './investments/investments.module';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -16,8 +18,15 @@ import { InvestmentsModule } from './investments/investments.module';
     ExpensesModule,
     SummaryModule,
     InvestmentsModule,
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 30 }]),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

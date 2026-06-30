@@ -2,36 +2,58 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Wallet, LogIn, UserPlus } from "lucide-react";
-import { loginApi, registerApi } from "@/lib/api";
+import { Wallet, LogIn, UserPlus, KeyRound } from "lucide-react";
+import { loginApi, registerApi, setInitialPasswordApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+
+type Mode = "login" | "register" | "first-access";
 
 export default function Login() {
   const router = useRouter();
   const { setUser } = useAuth();
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const resetFields = (newMode: Mode) => {
+    setMode(newMode);
+    setError(null);
+    setPassword("");
+    setConfirmPassword("");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if ((mode === "register" || mode === "first-access") && password !== confirmPassword) {
+      setError("As senhas não coincidem.");
+      return;
+    }
+    if ((mode === "register" || mode === "first-access") && password.length < 8) {
+      setError("A senha deve ter pelo menos 8 caracteres.");
+      return;
+    }
+
     setLoading(true);
-
     try {
-      const user =
-        mode === "login"
-          ? await loginApi(email.trim(), name.trim())
-          : await registerApi(email.trim(), name.trim());
-
+      let user;
+      if (mode === "login") {
+        user = await loginApi(email.trim(), password);
+      } else if (mode === "register") {
+        user = await registerApi(email.trim(), name.trim(), password);
+      } else {
+        user = await setInitialPasswordApi(email.trim(), name.trim(), password);
+      }
       setUser(user);
       router.replace("/dashboard");
     } catch (err: any) {
       const msg =
-        err?.response?.data?.message ||
-        "Erro ao autenticar. Verifique seus dados.";
+        err?.response?.data?.message || "Erro ao autenticar. Verifique seus dados.";
       setError(Array.isArray(msg) ? msg.join(", ") : msg);
     } finally {
       setLoading(false);
@@ -63,28 +85,20 @@ export default function Login() {
         <div className="bg-white border border-[#EAE7E1] rounded-2xl p-6">
           {/* Tabs */}
           <div className="flex gap-1 mb-6 bg-[#F3F1ED] rounded-full p-1">
-            <button
-              type="button"
-              onClick={() => { setMode("login"); setError(null); }}
-              className={`flex-1 rounded-full py-1.5 text-sm font-medium transition-all ${
-                mode === "login"
-                  ? "bg-white text-[#1C1C19] shadow-sm"
-                  : "text-[#6B6A65] hover:text-[#1C1C19]"
-              }`}
-            >
-              Entrar
-            </button>
-            <button
-              type="button"
-              onClick={() => { setMode("register"); setError(null); }}
-              className={`flex-1 rounded-full py-1.5 text-sm font-medium transition-all ${
-                mode === "register"
-                  ? "bg-white text-[#1C1C19] shadow-sm"
-                  : "text-[#6B6A65] hover:text-[#1C1C19]"
-              }`}
-            >
-              Cadastrar
-            </button>
+            {(["login", "register", "first-access"] as Mode[]).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => resetFields(m)}
+                className={`flex-1 rounded-full py-1.5 text-xs font-medium transition-all ${
+                  mode === m
+                    ? "bg-white text-[#1C1C19] shadow-sm"
+                    : "text-[#6B6A65] hover:text-[#1C1C19]"
+                }`}
+              >
+                {m === "login" ? "Entrar" : m === "register" ? "Cadastrar" : "Primeiro acesso"}
+              </button>
+            ))}
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -100,17 +114,49 @@ export default function Login() {
               />
             </div>
 
+            {/* Nome: só no cadastro e primeiro acesso */}
+            {(mode === "register" || mode === "first-access") && (
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-[#1C1C19]">Nome</label>
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Seu nome completo"
+                  className="w-full h-10 rounded-xl border border-[#EAE7E1] bg-[#F9F8F6] px-3 text-sm outline-none focus:border-[#2D4238] focus:ring-2 focus:ring-[#2D4238]/20 transition-all"
+                />
+              </div>
+            )}
+
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-[#1C1C19]">Nome</label>
+              <label className="text-sm font-medium text-[#1C1C19]">
+                {mode === "first-access" ? "Nova senha" : "Senha"}
+              </label>
               <input
-                type="text"
+                type="password"
                 required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Seu nome completo"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={mode === "login" ? "Sua senha" : "Mínimo 8 caracteres"}
                 className="w-full h-10 rounded-xl border border-[#EAE7E1] bg-[#F9F8F6] px-3 text-sm outline-none focus:border-[#2D4238] focus:ring-2 focus:ring-[#2D4238]/20 transition-all"
               />
             </div>
+
+            {/* Confirmação: só no cadastro e primeiro acesso */}
+            {(mode === "register" || mode === "first-access") && (
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-[#1C1C19]">Confirmar senha</label>
+                <input
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Repita a senha"
+                  className="w-full h-10 rounded-xl border border-[#EAE7E1] bg-[#F9F8F6] px-3 text-sm outline-none focus:border-[#2D4238] focus:ring-2 focus:ring-[#2D4238]/20 transition-all"
+                />
+              </div>
+            )}
 
             {error && (
               <div className="rounded-xl bg-[#F9EBEA] border border-[#B34A3E]/20 px-3 py-2 text-sm text-[#B34A3E]">
@@ -127,15 +173,17 @@ export default function Login() {
                 "Aguarde..."
               ) : mode === "login" ? (
                 <><LogIn size={15} /> Entrar</>
-              ) : (
+              ) : mode === "register" ? (
                 <><UserPlus size={15} /> Criar conta</>
+              ) : (
+                <><KeyRound size={15} /> Definir senha</>
               )}
             </button>
           </form>
 
-          {mode === "login" && (
+          {mode === "first-access" && (
             <p className="text-xs text-[#9A9892] text-center mt-4">
-              Email e nome devem ser iguais ao cadastrado.
+              Para contas criadas antes da autenticação por senha. Use o email e nome que você cadastrou.
             </p>
           )}
         </div>
