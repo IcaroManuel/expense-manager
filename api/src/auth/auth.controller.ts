@@ -47,7 +47,13 @@ export class AuthController {
     const token = this.authService.signToken(user);
     response.cookie('session_token', token, sessionCookieOptions());
 
-    return { id: user.id, email: user.email, name: user.name, picture: user.picture };
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      picture: user.picture,
+      password: user.password,
+    };
   }
 
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
@@ -71,7 +77,13 @@ export class AuthController {
     const token = this.authService.signToken(user);
     response.cookie('session_token', token, sessionCookieOptions());
 
-    return { id: user.id, email: user.email, name: user.name, picture: user.picture };
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      picture: user.picture,
+      password: user.password,
+    };
   }
 
   // Migração única pra contas antigas (sem senha). Pode ser removido
@@ -97,7 +109,13 @@ export class AuthController {
     const token = this.authService.signToken(user);
     response.cookie('session_token', token, sessionCookieOptions());
 
-    return { id: user.id, email: user.email, name: user.name, picture: user.picture };
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      picture: user.picture,
+      password: user.password,
+    };
   }
 
   @UseGuards(JwtAuthGuard)
