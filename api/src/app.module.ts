@@ -6,7 +6,6 @@ import { AuthModule } from './auth/auth.module';
 import { BillingsModule } from './billings/billings.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { SummaryModule } from './summary/summary.module';
-import { InvestmentsModule } from './investments/investments.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 
@@ -17,7 +16,6 @@ import { APP_GUARD } from '@nestjs/core';
     BillingsModule,
     ExpensesModule,
     SummaryModule,
-    InvestmentsModule,
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 30 }]),
   ],
   controllers: [AppController],

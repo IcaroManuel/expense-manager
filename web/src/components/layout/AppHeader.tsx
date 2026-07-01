@@ -8,7 +8,6 @@ import { NAV } from "@/constants/test-ids";
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Painel", testId: NAV.dashboardLink },
-  { href: "/investments", label: "Investimentos", testId: NAV.investmentsLink },
 ];
 
 export default function AppHeader() {
@@ -26,7 +25,7 @@ export default function AppHeader() {
             <div>
               <div className="text-eyebrow leading-none">Gestor Financeiro</div>
               <div className="font-display text-base font-semibold leading-tight">
-                {pathname === "/investments" ? "Investimentos" : "Painel mensal"}
+                {"Painel mensal"}
               </div>
             </div>
           </div>
