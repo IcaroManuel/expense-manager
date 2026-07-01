@@ -26,21 +26,28 @@ function Card({ label, value, sub, accent, icon: Icon, testId }: CardProps) {
   return (
     <div
       data-testid={testId}
-      className="relative bg-white border border-[#EAE7E1] rounded-2xl p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
+      className="relative bg-white border border-[#EAE7E1] rounded-2xl p-3 sm:p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm overflow-hidden"
     >
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="text-eyebrow">{label}</div>
-          <div className="mt-3 font-display text-2xl sm:text-3xl font-semibold tracking-tight">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] sm:text-xs uppercase tracking-wider text-[#6B6A65] font-medium truncate">
+            {label}
+          </div>
+          <div className="mt-1.5 sm:mt-2 font-display text-base sm:text-xl font-semibold tracking-tight leading-tight break-all">
             {value}
           </div>
-          {sub ? <div className="mt-1 text-sm text-[#6B6A65]">{sub}</div> : null}
+          {sub ? (
+            <div className="mt-1 text-[10px] sm:text-xs text-[#6B6A65] leading-snug break-words">
+              {sub}
+            </div>
+          ) : null}
         </div>
         <div
-          className="w-10 h-10 rounded-full flex items-center justify-center"
+          className="w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center shrink-0 mt-0.5"
           style={{ background: accent.bg, color: accent.fg }}
         >
-          <Icon size={18} />
+          <Icon size={14} className="sm:hidden" />
+          <Icon size={16} className="hidden sm:block" />
         </div>
       </div>
     </div>
@@ -53,7 +60,7 @@ export default function SummaryCards({ summary }: SummaryCardsProps) {
   const balancePositive = summary.balance >= 0;
 
   return (
-    <div className="grid grid-cols-2 gap-4 mt-6">
+    <div className="grid grid-cols-2 gap-2 sm:gap-4 mt-4 sm:mt-6">
       <Card
         testId={DASHBOARD.summaryIncome}
         label="Total de entradas"
@@ -65,7 +72,7 @@ export default function SummaryCards({ summary }: SummaryCardsProps) {
         testId={DASHBOARD.summaryExpense}
         label="Total de saídas"
         value={formatBRL(summary.totalExpenses)}
-        sub={`${formatBRL(summary.totalPaid)} pagas · ${formatBRL(summary.totalPending)} pendentes`}
+        sub={`${formatBRL(summary.totalPaid)} pagas · ${formatBRL(summary.totalPending)} pend.`}
         icon={ArrowDownRight}
         accent={{ bg: "#F9EBEA", fg: "#B34A3E" }}
       />
@@ -76,7 +83,9 @@ export default function SummaryCards({ summary }: SummaryCardsProps) {
         sub={balancePositive ? "Sobra positiva" : "Atenção: déficit"}
         icon={Wallet}
         accent={
-          balancePositive ? { bg: "#EDF2ED", fg: "#4A6B4A" } : { bg: "#F9EBEA", fg: "#B34A3E" }
+          balancePositive
+            ? { bg: "#EDF2ED", fg: "#4A6B4A" }
+            : { bg: "#F9EBEA", fg: "#B34A3E" }
         }
       />
       <Card

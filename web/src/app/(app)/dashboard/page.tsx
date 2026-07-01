@@ -15,16 +15,28 @@ export default function Dashboard() {
   const [billings, setBillings] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [summary, setSummary] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [firstYear, setFirstYear] = useState<number | undefined>(undefined);
 
   const refresh = useCallback(async () => {
-    const [b, e, s] = await Promise.all([
-      fetchBillings(year, month),
-      fetchExpenses(year, month),
-      fetchSummary(year, month),
-    ]);
-    setBillings(b);
-    setExpenses(e);
-    setSummary(s);
+    setLoading(true);
+    try {
+      const [b, e, s] = await Promise.all([
+        fetchBillings(year, month),
+        fetchExpenses(year, month),
+        fetchSummary(year, month),
+      ]);
+      setBillings(b);
+      setExpenses(e);
+      setSummary(s);
+
+      // Determina o menor ano com dados pra limitar o select
+      if (firstYear === undefined && e.length > 0) {
+        setFirstYear(year);
+      }
+    } finally {
+      setLoading(false);
+    }
   }, [year, month]);
 
   useEffect(() => {
@@ -48,10 +60,16 @@ export default function Dashboard() {
             histórico permanente.
           </p>
         </div>
-        <MonthSelector year={year} month={month} onChange={onMonthChange} />
+        <MonthSelector
+          year={year}
+          month={month}
+          onChange={onMonthChange}
+          loading={loading}
+          firstYear={firstYear ?? today.getFullYear()}
+        />
       </section>
 
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <section className={`grid grid-cols-1 lg:grid-cols-3 gap-6 items-start transition-opacity duration-200 ${loading ? "opacity-50 pointer-events-none" : "opacity-100"}`}>
         <BillingsCard billings={billings} year={year} month={month} onChanged={refresh} summary={summary} />
         <ExpensesCard expenses={expenses} year={year} month={month} onChanged={refresh} />
         <SpendingChart summary={summary} />

@@ -1,33 +1,29 @@
-import React, { useState } from "react";
-import { Plus, MoreHorizontal, Trash2, Pencil, Check, Clock, Repeat } from "lucide-react";
+import React, { useState, useRef, useCallback } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
+  Plus, MoreHorizontal, Trash2, Pencil, Check, Clock,
+  Repeat, CreditCard, Banknote,
+} from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+  DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { createExpense, deleteExpense, updateExpense } from "@/lib/api";
 import { DASHBOARD, MODAL } from "@/constants/test-ids";
 import { Expense, ExpenseStatus, ExpenseType } from "@/dtos/expense";
-import { formatBRL, EXPENSE_TYPE_LABEL, EXPENSE_STATUS_LABEL, EXPENSE_COLOR_PALETTE, MONTHS_PT, MONTH_SHORT_PT, parseBRLInput } from "@/lib/format";
+import {
+  formatBRL, EXPENSE_TYPE_LABEL, EXPENSE_STATUS_LABEL,
+  EXPENSE_COLOR_PALETTE, MONTHS_PT, parseBRLInput,
+  EXPENSE_TYPE_ORDER,
+} from "@/lib/format";
 
 export interface ExpensesCardProps {
   expenses: Expense[];
@@ -45,37 +41,72 @@ interface ExpenseFormState {
   color: string;
   hasEndDate: boolean;
   endYear: string;
+  endYearMode: "preset" | "custom"; // item 2
   endMonth: string;
 }
 
 const DEFAULT_COLOR = EXPENSE_COLOR_PALETTE[0].value;
 const EMPTY: ExpenseFormState = {
   id: null,
-   name: "",
-   type: "FIXED",
-   value: "",
-   status: "PENDING",
-   color: DEFAULT_COLOR,
-   hasEndDate: false,
-   endYear: "",
-   endMonth: "",
+  name: "",
+  type: "FIXED",
+  value: "",
+  status: "PENDING",
+  color: DEFAULT_COLOR,
+  hasEndDate: false,
+  endYear: "",
+  endYearMode: "preset",
+  endMonth: "",
 };
+
+// Item 7 — ícones por tipo
+function ExpenseIcon({ type, color }: { type: ExpenseType; color?: string }) {
+  const bg = color || "#2D4238";
+  const Icon =
+    type === "FIXED" ? Repeat :
+    type === "CARD" || type === "CARD_SINGLE" ? CreditCard :
+    Banknote;
+  return (
+    <div
+      className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white"
+      style={{ background: bg }}
+    >
+      <Icon size={16} />
+    </div>
+  );
+}
+
+// Item 6 — ordenação
+function sortExpenses(expenses: Expense[]): Expense[] {
+  return [...expenses].sort((a, b) => {
+    const aPaid = a.status === "PAID";
+    const bPaid = b.status === "PAID";
+    if (aPaid !== bPaid) return aPaid ? 1 : -1; // pagas vão pro fundo
+    const orderDiff = (EXPENSE_TYPE_ORDER[a.type] ?? 9) - (EXPENSE_TYPE_ORDER[b.type] ?? 9);
+    if (orderDiff !== 0) return orderDiff;
+    return Number(b.value) - Number(a.value); // maior valor primeiro
+  });
+}
+
+// Próximos 5 anos para o preset (item 2)
+const NEXT_5_YEARS = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() + i);
 
 export default function ExpensesCard({ expenses, year, month, onChanged }: ExpensesCardProps) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<ExpenseFormState>(EMPTY);
   const [submitting, setSubmitting] = useState(false);
+  // Ref pra detectar clique fora do Dialog (item 3)
+  const overlayClickRef = useRef(false);
 
-  const handleOpenChange = (next: boolean) => {
+  // Item 3: só fecha se o clique veio do overlay (fora do DialogContent)
+  const handleOpenChange = useCallback((next: boolean) => {
+    if (!next && !overlayClickRef.current) return; // clique dentro → ignora
+    overlayClickRef.current = false;
     if (!next) setForm(EMPTY);
     setOpen(next);
-  };
+  }, []);
 
-  const startCreate = () => {
-    setForm(EMPTY);
-    setOpen(true);
-  };
-
+  const startCreate = () => { setForm(EMPTY); setOpen(true); };
   const startEdit = (expense: Expense) => {
     setForm({
       id: expense.id,
@@ -86,11 +117,13 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
       color: expense.color || DEFAULT_COLOR,
       hasEndDate: !!(expense.endYear && expense.endMonth),
       endYear: expense.endYear ? String(expense.endYear) : "",
+      endYearMode: "preset",
       endMonth: expense.endMonth ? String(expense.endMonth) : "",
     });
     setOpen(true);
   };
 
+  // Tipos recorrentes (têm data de término)
   const isRecurringType = form.type === "FIXED" || form.type === "CARD";
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -124,8 +157,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
             color: form.color,
             ...(isRecurringType ? { endYear, endMonth } : {}),
           },
-          year,
-          month,
+          year, month,
         );
         toast.success("Despesa atualizada");
       } else {
@@ -155,9 +187,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
       await deleteExpense(item.id, year, month, scope);
       toast.success(scope === "all" ? "Removida permanentemente" : "Removida deste mês");
       onChanged?.();
-    } catch (err) {
-      toast.error("Erro ao remover");
-    }
+    } catch { toast.error("Erro ao remover"); }
   };
 
   const toggleStatus = async (item: Expense) => {
@@ -165,19 +195,17 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
       await updateExpense(
         item.id,
         { status: item.status === "PAID" ? "PENDING" : "PAID" },
-        year,
-        month,
+        year, month,
       );
       onChanged?.();
-    } catch (err) {
-      toast.error("Erro ao atualizar status");
-    }
+    } catch { toast.error("Erro ao atualizar status"); }
   };
 
   const total = expenses.reduce((acc, e) => acc + Number(e.value || 0), 0);
+  const sorted = sortExpenses(expenses);
 
   return (
-    <div className="bg-white border border-[#EAE7E1] rounded-2xl p-6">
+    <div className="bg-white border border-[#EAE7E1] rounded-2xl p-4 sm:p-6">
       <div className="flex items-center justify-between">
         <div>
           <div className="text-eyebrow">Despesas</div>
@@ -191,35 +219,30 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
         <button
           data-testid={DASHBOARD.addExpense}
           onClick={startCreate}
-          className="inline-flex items-center gap-2 bg-[#2D4238] text-white hover:bg-[#3C5749] rounded-full px-5 py-2.5 text-sm font-medium transition-colors"
+          className="inline-flex items-center gap-2 bg-[#2D4238] text-white hover:bg-[#3C5749] rounded-full px-4 sm:px-5 py-2.5 text-sm font-medium transition-colors"
         >
-          <Plus size={16} /> Adicionar
+          <Plus size={16} /> <span className="hidden sm:inline">Adicionar</span>
         </button>
       </div>
 
       <ul data-testid={DASHBOARD.expenseList} className="divide-y divide-[#EAE7E1]">
-        {expenses.length === 0 && (
+        {sorted.length === 0 && (
           <li className="py-10 text-center text-sm text-[#9A9892]">
             Nenhuma despesa registrada neste mês.
           </li>
         )}
-        {expenses.map((ex) => {
+        {sorted.map((ex) => {
           const isPaid = ex.status === "PAID";
           return (
             <li
               key={ex.id}
               data-testid={DASHBOARD.expenseItem(ex.id)}
-              className="py-4 flex items-center justify-between gap-3 animate-fade-up"
+              className={`py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-3 transition-opacity ${isPaid ? "opacity-60" : ""}`}
             >
-              <div className="flex items-center gap-3 min-w-0">
-                <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white"
-                  style={{ background: ex.color || "#2D4238" }}
-                >
-                  {ex.recurring ? <Repeat size={16} /> : <Plus size={16} />}
-                </div>
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <ExpenseIcon type={ex.type} color={ex.color} />
                 <div className="min-w-0">
-                  <div className="font-medium text-[#1C1C19] truncate">{ex.name}</div>
+                  <div className="font-medium text-[#1C1C19] truncate text-sm sm:text-base">{ex.name}</div>
                   <div className="text-xs text-[#6B6A65] uppercase tracking-wider">
                     {EXPENSE_TYPE_LABEL[ex.type]}
                     {ex.recurring ? " · Recorrente" : ""}
@@ -227,20 +250,20 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 shrink-0">
+              <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
                 <button
                   data-testid={DASHBOARD.expenseToggleStatus(ex.id)}
                   onClick={() => toggleStatus(ex)}
-                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium uppercase tracking-wider transition-colors ${
+                  className={`inline-flex items-center gap-1 sm:gap-1.5 rounded-full px-2 sm:px-3 py-1 text-xs font-medium uppercase tracking-wider transition-colors ${
                     isPaid
                       ? "bg-[#EDF2ED] text-[#4A6B4A] hover:bg-[#dde6dd]"
                       : "bg-[#FDF6EA] text-[#C68B35] hover:bg-[#f5ead2]"
                   }`}
                 >
                   {isPaid ? <Check size={12} /> : <Clock size={12} />}
-                  {EXPENSE_STATUS_LABEL[ex.status]}
+                  <span className="hidden sm:inline">{EXPENSE_STATUS_LABEL[ex.status]}</span>
                 </button>
-                <div className="font-display font-semibold text-[#1C1C19] tabular-nums">
+                <div className="font-display font-semibold text-[#1C1C19] tabular-nums text-sm sm:text-base">
                   {formatBRL(Number(ex.value))}
                 </div>
                 <DropdownMenu>
@@ -254,10 +277,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem
-                      data-testid={DASHBOARD.expenseEdit(ex.id)}
-                      onClick={() => startEdit(ex)}
-                    >
+                    <DropdownMenuItem data-testid={DASHBOARD.expenseEdit(ex.id)} onClick={() => startEdit(ex)}>
                       <Pencil size={14} className="mr-2" /> Editar
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onDelete(ex, "month")}>
@@ -280,14 +300,20 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
         })}
       </ul>
 
+      {/* Item 3: onPointerDown no overlay detecta clique fora do card */}
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent data-testid={MODAL.expenseDialog} className="sm:max-w-[460px] rounded-2xl">
+        <DialogContent
+          data-testid={MODAL.expenseDialog}
+          className="sm:max-w-[460px] rounded-2xl"
+          onPointerDownOutside={() => { overlayClickRef.current = true; }}
+          onInteractOutside={() => { overlayClickRef.current = true; }}
+        >
           <DialogHeader>
             <DialogTitle className="font-display tracking-tight">
               {form.id ? "Editar despesa" : "Nova despesa"}
             </DialogTitle>
             <DialogDescription>
-              Fixas e Cartão se repetem mensalmente. Avulsas aparecem só no mês cadastrado.
+              Fixas e Cartão recorrente se repetem mensalmente. Cartão e Avulsa aparecem só no mês cadastrado.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={submit} className="space-y-4">
@@ -307,10 +333,13 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
                 <Label>Tipo</Label>
                 <Select
                   value={form.type}
-                    onValueChange={(v: ExpenseType) =>
-                      setForm((f) => ({ ...f, type: v, hasEndDate: v === "DETACHED" ? false : f.hasEndDate }))
-                    }
-                    disabled={!!form.id}
+                  onValueChange={(v: ExpenseType) =>
+                    setForm((f) => ({
+                      ...f, type: v,
+                      hasEndDate: (v === "DETACHED" || v === "CARD_SINGLE") ? false : f.hasEndDate,
+                    }))
+                  }
+                  disabled={!!form.id}
                 >
                   <SelectTrigger data-testid={MODAL.expenseType}>
                     <SelectValue />
@@ -318,6 +347,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
                   <SelectContent>
                     <SelectItem value="FIXED">Fixa (recorrente)</SelectItem>
                     <SelectItem value="CARD">Cartão (recorrente)</SelectItem>
+                    <SelectItem value="CARD_SINGLE">Cartão (avulso)</SelectItem>
                     <SelectItem value="DETACHED">Avulsa</SelectItem>
                   </SelectContent>
                 </Select>
@@ -350,13 +380,13 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
               </Select>
             </div>
 
+            {/* Item 2 — data de término com preset de anos */}
             {isRecurringType && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label>Data de término</Label>
                   <button
                     type="button"
-                    data-testid="expense-toggle-end-date"
                     onClick={() =>
                       setForm((f) => ({ ...f, hasEndDate: !f.hasEndDate, endYear: "", endMonth: "" }))
                     }
@@ -366,26 +396,62 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
                   </button>
                 </div>
                 {form.hasEndDate ? (
-                  <div className="grid grid-cols-2 gap-3">
-                    <Select value={form.endMonth} onValueChange={(v) => setForm((f) => ({ ...f, endMonth: v }))}>
-                      <SelectTrigger data-testid="expense-end-month-select">
-                        <SelectValue placeholder="Mês" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {MONTHS_PT.map((label, idx) => (
-                          <SelectItem key={idx + 1} value={String(idx + 1)}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Input
-                      data-testid="expense-end-year-input"
-                      inputMode="numeric"
-                      value={form.endYear}
-                      onChange={(e) => setForm((f) => ({ ...f, endYear: e.target.value.replace(/\D/g, "") }))}
-                      placeholder="Ano (ex: 2026)"
-                    />
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Mês */}
+                      <Select value={form.endMonth} onValueChange={(v) => setForm((f) => ({ ...f, endMonth: v }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Mês" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {MONTHS_PT.map((label, idx) => (
+                            <SelectItem key={idx + 1} value={String(idx + 1)}>{label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {/* Ano — preset ou campo livre */}
+                      {form.endYearMode === "preset" ? (
+                        <Select
+                          value={form.endYear}
+                          onValueChange={(v) => {
+                            if (v === "other") {
+                              setForm((f) => ({ ...f, endYearMode: "custom", endYear: "" }));
+                            } else {
+                              setForm((f) => ({ ...f, endYear: v }));
+                            }
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Ano" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {NEXT_5_YEARS.map((y) => (
+                              <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                            ))}
+                            <SelectItem value="other">Outro...</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <div className="flex gap-1">
+                          <Input
+                            inputMode="numeric"
+                            value={form.endYear}
+                            onChange={(e) =>
+                              setForm((f) => ({ ...f, endYear: e.target.value.replace(/\D/g, "") }))
+                            }
+                            placeholder="Ano"
+                            className="flex-1"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setForm((f) => ({ ...f, endYearMode: "preset", endYear: "" }))}
+                            className="text-xs text-[#6B6A65] hover:text-[#1C1C19] px-1"
+                            title="Voltar para lista"
+                          >✕</button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <p className="text-xs text-[#9A9892]">
@@ -404,7 +470,6 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
                     <button
                       key={c.value}
                       type="button"
-                      data-testid={`expense-color-${c.value.replace("#", "")}`}
                       onClick={() => setForm((f) => ({ ...f, color: c.value }))}
                       title={c.label}
                       aria-label={c.label}
@@ -420,11 +485,12 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
                 })}
               </div>
             </div>
+
             <DialogFooter className="pt-2">
               <button
                 type="button"
                 data-testid={MODAL.expenseCancel}
-                onClick={() => setOpen(false)}
+                onClick={() => { overlayClickRef.current = true; setOpen(false); }}
                 className="rounded-full px-5 py-2 text-sm font-medium hover:bg-[#F3F1ED] transition-colors"
               >
                 Cancelar

@@ -8,13 +8,13 @@ export const formatBRL = (value: number | string | null | undefined): string =>
   BRL.format(Number(value || 0));
 
 export const MONTHS_PT = [
-  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+  "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+  "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro",
 ] as const;
 
 export const MONTH_SHORT_PT = [
-  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
-  "Jul", "Ago", "Set", "Out", "Nov", "Dez",
+  "Jan","Fev","Mar","Abr","Mai","Jun",
+  "Jul","Ago","Set","Out","Nov","Dez",
 ] as const;
 
 export const BILLING_TYPE_LABEL: Record<string, string> = {
@@ -24,7 +24,8 @@ export const BILLING_TYPE_LABEL: Record<string, string> = {
 
 export const EXPENSE_TYPE_LABEL: Record<string, string> = {
   FIXED: "Fixa",
-  CARD: "Cartão",
+  CARD: "Cartão (recorrente)",
+  CARD_SINGLE: "Cartão",
   DETACHED: "Avulsa",
 };
 
@@ -36,7 +37,16 @@ export const EXPENSE_STATUS_LABEL: Record<string, string> = {
 export const EXPENSE_TYPE_COLOR: Record<string, string> = {
   FIXED: "#2D4238",
   CARD: "#4A6B4A",
+  CARD_SINGLE: "#4A6B4A",
   DETACHED: "#C68B35",
+};
+
+// Ordem de exibição: FIXED → CARD → CARD_SINGLE → DETACHED (item 6)
+export const EXPENSE_TYPE_ORDER: Record<string, number> = {
+  FIXED: 0,
+  CARD: 1,
+  CARD_SINGLE: 2,
+  DETACHED: 3,
 };
 
 export const EXPENSE_COLOR_PALETTE = [
@@ -54,17 +64,11 @@ export const EXPENSE_COLOR_PALETTE = [
   { value: "#9A9892", label: "Cinza" },
 ] as const;
 
-export const TRANSACTION_TYPE_LABEL: Record<string, string> = {
-  DEPOSIT: "Depósito",
-  WITHDRAWAL: "Retirada",
-};
-
 export const monthYearLabel = (year: number, month: number): string =>
   `${MONTH_SHORT_PT[month - 1]}/${year}`;
 
 export function parseBRLInput(input: string): number {
   const trimmed = input.trim();
-
   if (trimmed.includes(",") && trimmed.includes(".")) {
     return parseFloat(trimmed.replace(/\./g, "").replace(",", "."));
   }

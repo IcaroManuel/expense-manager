@@ -86,6 +86,7 @@ enum BillingType {
 enum ExpenseType {
   FIXED
   CARD
+  CARD_SINGLE
   DETACHED
 }
 

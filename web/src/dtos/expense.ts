@@ -1,4 +1,4 @@
-export type ExpenseType = "FIXED" | "CARD" | "DETACHED";
+export type ExpenseType = "FIXED" | "CARD" | "CARD_SINGLE" | "DETACHED";
 export type ExpenseStatus = "PENDING" | "PAID";
 
 export interface Expense {
