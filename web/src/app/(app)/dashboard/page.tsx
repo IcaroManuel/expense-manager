@@ -5,8 +5,10 @@ import MonthSelector from "@/components/dashboard/MonthSelector";
 import BillingsCard from "@/components/dashboard/BillingsCard";
 import ExpensesCard from "@/components/dashboard/ExpensesCard";
 import SpendingChart from "@/components/dashboard/SpendingChart";
+import SummaryCards from "@/components/dashboard/SummaryCards";
 import { fetchBillings, fetchExpenses, fetchSummary } from "@/lib/api";
 import { DASHBOARD } from "@/constants/test-ids";
+import { Summary } from "@/dtos/summary";
 
 export default function Dashboard() {
   const today = new Date();
@@ -14,23 +16,29 @@ export default function Dashboard() {
   const [month, setMonth] = useState(today.getMonth() + 1);
   const [billings, setBillings] = useState([]);
   const [expenses, setExpenses] = useState([]);
-  const [summary, setSummary] = useState<any>(null);
+  const [summary, setSummary] = useState<Summary>({} as Summary);
+  const [previousSummary, setPreviousSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(false);
   const [firstYear, setFirstYear] = useState<number | undefined>(undefined);
 
+  const getPreviousMonthYear = (y: number, m: number) =>
+    m === 1 ? { year: y - 1, month: 12 } : { year: y, month: m - 1 };
+
   const refresh = useCallback(async () => {
     setLoading(true);
+    const prev = getPreviousMonthYear(year, month);
     try {
-      const [b, e, s] = await Promise.all([
+      const [b, e, s, ps] = await Promise.all([
         fetchBillings(year, month),
         fetchExpenses(year, month),
         fetchSummary(year, month),
+        fetchSummary(prev.year, prev.month),
       ]);
       setBillings(b);
       setExpenses(e);
       setSummary(s);
+      setPreviousSummary(ps);
 
-      // Determina o menor ano com dados pra limitar o select
       if (firstYear === undefined && e.length > 0) {
         setFirstYear(year);
       }
@@ -39,14 +47,7 @@ export default function Dashboard() {
     }
   }, [year, month]);
 
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
-
-  const onMonthChange = (y: number, m: number) => {
-    setYear(y);
-    setMonth(m);
-  };
+  useEffect(() => { refresh(); }, [refresh]);
 
   return (
     <div data-testid={DASHBOARD.root}>
@@ -56,21 +57,20 @@ export default function Dashboard() {
             Suas finanças, no controle.
           </h1>
           <p className="text-[#6B6A65] text-sm sm:text-base">
-            Acompanhe entradas, saídas e o quanto da sua renda está comprometida — mês a mês, com
-            histórico permanente.
+            Acompanhe entradas, saídas e o quanto da sua renda está comprometida — mês a mês.
           </p>
         </div>
         <MonthSelector
           year={year}
           month={month}
-          onChange={onMonthChange}
+          onChange={(y, m) => { setYear(y); setMonth(m); }}
           loading={loading}
           firstYear={firstYear ?? today.getFullYear()}
         />
       </section>
 
-      <section className={`grid grid-cols-1 lg:grid-cols-3 gap-6 items-start transition-opacity duration-200 ${loading ? "opacity-50 pointer-events-none" : "opacity-100"}`}>
-        <BillingsCard billings={billings} year={year} month={month} onChanged={refresh} summary={summary} />
+      <section className={`grid grid-cols-1 lg:grid-cols-3 gap-6 items-start transition-opacity duration-200 ${loading ? "opacity-50 pointer-events-none" : ""}`}>
+        <BillingsCard billings={billings} year={year} month={month} onChanged={refresh} summary={summary} previousSummary={previousSummary} />
         <ExpensesCard expenses={expenses} year={year} month={month} onChanged={refresh} />
         <SpendingChart summary={summary} />
       </section>

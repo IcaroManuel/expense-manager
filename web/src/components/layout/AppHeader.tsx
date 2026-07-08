@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, Wallet } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { NAV } from "@/constants/test-ids";
+import { BarChart2, Wallet, LogOut } from "lucide-react";
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Painel", testId: NAV.dashboardLink },
+  { href: "/analytics", label: "Análise", testId: "nav-link-analytics" },
 ];
 
 export default function AppHeader() {

@@ -41,6 +41,8 @@ export default function RootLayout({
         ibmPlexSans.variable,
         jetbrainsMono.variable,
       )}
+      suppressHydrationWarning
+      data-lt-installed="true"
     >
       <head>
       </head>

@@ -37,9 +37,10 @@ export interface BillingsCardProps {
   month: number;
   onChanged?: () => void;
   summary: Summary;
+  previousSummary: Summary | null;
 }
 
-export default function BillingsCard({ billings, year, month, onChanged, summary }: BillingsCardProps) {
+export default function BillingsCard({ billings, year, month, onChanged, summary, previousSummary }: BillingsCardProps) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: "", type: "SALARY" as BillingType, value: "" });
   const [submitting, setSubmitting] = useState(false);
@@ -259,7 +260,7 @@ export default function BillingsCard({ billings, year, month, onChanged, summary
         </Dialog>
       </div>
 
-      <SummaryCards summary={summary} />
+      <SummaryCards summary={summary} previousSummary={previousSummary}/>
     </div>
   );
 }

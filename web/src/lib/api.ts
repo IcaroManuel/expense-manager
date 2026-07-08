@@ -101,3 +101,6 @@ export const createInvestmentTransaction = (payload: {
 
 export const deleteInvestmentTransaction = (id: string) =>
   api.delete(`/investments/transactions/${id}`);
+
+export const fetchAnnualSummary = (year: number) =>
+  api.get(`/summary/annual?year=${year}`).then((r) => r.data);

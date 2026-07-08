@@ -22,4 +22,12 @@ export class SummaryController {
   ) {
     return this.summaryService.forMonth(user.id, year, month);
   }
+
+  @Get('annual')
+  async getAnnual(
+    @Query('year', ParseIntPipe) year: number,
+    @CurrentUser() user: any,
+  ) {
+    return this.summaryService.forYear(user.id, year);
+  }
 }

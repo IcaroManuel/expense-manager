@@ -21,14 +21,25 @@ export interface MonthSummary {
   incomeByType: any[];
 }
 
+export interface AnnualSummary {
+  year: number;
+  months: MonthSummary[];
+  totals: {
+    totalIncome: number;
+    totalExpenses: number;
+    balance: number;
+    bestMonth: number | null;   // mês com menor gasto
+    worstMonth: number | null;  // mês com maior gasto
+  };
+  expensesByType: { type: string; value: number }[];
+  topExpenseMonth: number | null;
+}
+
 @Injectable()
 export class SummaryService {
   private readonly sumStrategy = new SumValueStrategy();
   private readonly sumPaidStrategy = new FilteredSumStrategy('status', 'PAID');
-  private readonly sumPendingStrategy = new FilteredSumStrategy(
-    'status',
-    'PENDING',
-  );
+  private readonly sumPendingStrategy = new FilteredSumStrategy('status', 'PENDING');
   private readonly committedStrategy = new CommittedPercentageStrategy();
   private readonly groupByTypeStrategy = new GroupByTypeStrategy();
 
@@ -37,31 +48,18 @@ export class SummaryService {
     private readonly expensesService: ExpensesService,
   ) {}
 
-  async forMonth(
-    userId: string,
-    year: number,
-    month: number,
-  ): Promise<MonthSummary> {
-    const billings = await this.billingsService.listForMonth(
-      userId,
-      year,
-      month,
-    );
-    const expenses = await this.expensesService.listForMonth(
-      userId,
-      year,
-      month,
-    );
+  async forMonth(userId: string, year: number, month: number): Promise<MonthSummary> {
+    const [billings, expenses] = await Promise.all([
+      this.billingsService.listForMonth(userId, year, month),
+      this.expensesService.listForMonth(userId, year, month),
+    ]);
 
     const totalIncome = this.sumStrategy.calculate(billings);
     const totalExpenses = this.sumStrategy.calculate(expenses);
     const totalPaid = this.sumPaidStrategy.calculate(expenses);
     const totalPending = this.sumPendingStrategy.calculate(expenses);
     const balance = Number((totalIncome - totalExpenses).toFixed(2));
-    const committedPercentage = this.committedStrategy.calculate(
-      totalIncome,
-      totalExpenses,
-    );
+    const committedPercentage = this.committedStrategy.calculate(totalIncome, totalExpenses);
 
     return {
       year,
@@ -74,6 +72,44 @@ export class SummaryService {
       committedPercentage,
       expensesByType: this.groupByTypeStrategy.calculate(expenses),
       incomeByType: this.groupByTypeStrategy.calculate(billings),
+    };
+  }
+
+  async forYear(userId: string, year: number): Promise<AnnualSummary> {
+    const months = await Promise.all(
+      Array.from({ length: 12 }, (_, i) => this.forMonth(userId, year, i + 1)),
+    );
+
+    const totalIncome = months.reduce((a, m) => a + m.totalIncome, 0);
+    const totalExpenses = months.reduce((a, m) => a + m.totalExpenses, 0);
+    const balance = Number((totalIncome - totalExpenses).toFixed(2));
+
+    const activeMonths = months.filter((m) => m.totalExpenses > 0);
+
+    const worstMonth = activeMonths.length
+      ? activeMonths.reduce((a, b) => (b.totalExpenses > a.totalExpenses ? b : a)).month
+      : null;
+
+    const bestMonth = activeMonths.length
+      ? activeMonths.reduce((a, b) => (b.totalExpenses < a.totalExpenses ? b : a)).month
+      : null;
+
+    const typeMap = new Map<string, number>();
+    for (const m of months) {
+      for (const bucket of m.expensesByType) {
+        typeMap.set(bucket.type, (typeMap.get(bucket.type) ?? 0) + Number(bucket.value));
+      }
+    }
+    const expensesByType = Array.from(typeMap.entries())
+      .map(([type, value]) => ({ type, value: Number(value.toFixed(2)) }))
+      .sort((a, b) => b.value - a.value);
+
+    return {
+      year,
+      months,
+      totals: { totalIncome, totalExpenses, balance, bestMonth, worstMonth },
+      expensesByType,
+      topExpenseMonth: worstMonth,
     };
   }
 }
