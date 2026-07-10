@@ -2,11 +2,11 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Wallet, LogIn, UserPlus, KeyRound } from "lucide-react";
-import { loginApi, registerApi, setInitialPasswordApi } from "@/lib/api";
+import { Wallet, LogIn, UserPlus } from "lucide-react";
+import { loginApi, registerApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 
-type Mode = "login" | "register" | "first-access";
+type Mode = "login" | "register";
 
 export default function Login() {
   const router = useRouter();
@@ -30,11 +30,11 @@ export default function Login() {
     e.preventDefault();
     setError(null);
 
-    if ((mode === "register" || mode === "first-access") && password !== confirmPassword) {
+    if (mode === "register" && password !== confirmPassword) {
       setError("As senhas não coincidem.");
       return;
     }
-    if ((mode === "register" || mode === "first-access") && password.length < 8) {
+    if (mode === "register" && password.length < 8) {
       setError("A senha deve ter pelo menos 8 caracteres.");
       return;
     }
@@ -44,10 +44,8 @@ export default function Login() {
       let user;
       if (mode === "login") {
         user = await loginApi(email.trim(), password);
-      } else if (mode === "register") {
-        user = await registerApi(email.trim(), name.trim(), password);
       } else {
-        user = await setInitialPasswordApi(email.trim(), name.trim(), password);
+        user = await registerApi(email.trim(), name.trim(), password);
       }
       setUser(user);
       router.replace("/dashboard");
@@ -85,7 +83,7 @@ export default function Login() {
         <div className="bg-white dark:bg-[#1a1a1a] border border-[#EAE7E1] dark:border-[#333] rounded-2xl p-6 shadow-sm dark:shadow-xl">
           {/* Tabs */}
           <div className="flex gap-1 mb-6 bg-[#F3F1ED] dark:bg-[#2a2a2a] rounded-full p-1">
-            {(["login", "register", "first-access"] as Mode[]).map((m) => (
+            {(["login", "register"] as Mode[]).map((m) => (
               <button
                 key={m}
                 type="button"
@@ -96,7 +94,7 @@ export default function Login() {
                     : "text-[#6B6A65] dark:text-[#a0a0a0] hover:text-[#1C1C19] dark:hover:text-white"
                 }`}
               >
-                {m === "login" ? "Entrar" : m === "register" ? "Cadastrar" : "Primeiro acesso"}
+                {m === "login" ? "Entrar" : "Cadastrar"}
               </button>
             ))}
           </div>
@@ -114,8 +112,8 @@ export default function Login() {
               />
             </div>
 
-            {/* Nome: só no cadastro e primeiro acesso */}
-            {(mode === "register" || mode === "first-access") && (
+            {/* Nome: só no cadastro */}
+            {mode === "register" && (
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-[#1C1C19] dark:text-white">Nome</label>
                 <input
@@ -130,9 +128,7 @@ export default function Login() {
             )}
 
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-[#1C1C19] dark:text-white">
-                {mode === "first-access" ? "Nova senha" : "Senha"}
-              </label>
+              <label className="text-sm font-medium text-[#1C1C19] dark:text-white">Senha</label>
               <input
                 type="password"
                 required
@@ -143,8 +139,8 @@ export default function Login() {
               />
             </div>
 
-            {/* Confirmação: só no cadastro e primeiro acesso */}
-            {(mode === "register" || mode === "first-access") && (
+            {/* Confirmação: só no cadastro */}
+            {mode === "register" && (
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-[#1C1C19] dark:text-white">Confirmar senha</label>
                 <input
@@ -173,19 +169,12 @@ export default function Login() {
                 "Aguarde..."
               ) : mode === "login" ? (
                 <><LogIn size={15} /> Entrar</>
-              ) : mode === "register" ? (
-                <><UserPlus size={15} /> Criar conta</>
               ) : (
-                <><KeyRound size={15} /> Definir senha</>
+                <><UserPlus size={15} /> Criar conta</>
               )}
             </button>
           </form>
 
-          {mode === "first-access" && (
-            <p className="text-xs text-[#9A9892] dark:text-[#707070] text-center mt-4">
-              Para contas criadas antes da autenticação por senha. Use o email e nome que você cadastrou.
-            </p>
-          )}
         </div>
       </div>
     </div>
