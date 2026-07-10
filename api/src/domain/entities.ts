@@ -1,10 +1,11 @@
-import { BillingType, ExpenseStatus, ExpenseType } from './enums';
+import { ExpenseStatus } from './enums';
 
 export interface BillingView {
   id: string;
-  name: string;
-  type: BillingType | string;
+  categoryId: string;
+  categoryName: string;
   value: number;
+  description?: string;
   recurring: boolean;
   year: number;
   month: number;
@@ -14,8 +15,8 @@ export interface BillingView {
 
 export interface ExpenseView {
   id: string;
-  name: string;
-  type: ExpenseType | string;
+  categoryId: string;
+  categoryName: string;
   value: number;
   status: ExpenseStatus | string;
   color: string;
@@ -27,6 +28,8 @@ export interface ExpenseView {
 }
 
 export interface CategoryBreakdown {
-  type: string;
+  categoryId: string;
+  categoryName: string;
   value: number;
+  color: string;
 }

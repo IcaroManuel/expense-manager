@@ -1,7 +1,7 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Plus, MoreHorizontal, Trash2, Pencil, Check, Clock,
-  Repeat, CreditCard, Banknote,
+  CreditCard, Heart, DollarSign, Apple, Home, ShoppingCart, Zap, Tag, Bike, Car,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -16,40 +16,49 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { createExpense, deleteExpense, updateExpense } from "@/lib/api";
+import { createExpense, deleteExpense, updateExpense, fetchCategories } from "@/lib/api";
 import { DASHBOARD, MODAL } from "@/constants/test-ids";
-import { Expense, ExpenseStatus, ExpenseType } from "@/dtos/expense";
+import { Expense, ExpenseStatus } from "@/dtos/expense";
 import {
-  formatBRL, EXPENSE_TYPE_LABEL, EXPENSE_STATUS_LABEL,
+  formatBRL, EXPENSE_STATUS_LABEL,
   EXPENSE_COLOR_PALETTE, MONTHS_PT, parseBRLInput,
-  EXPENSE_TYPE_ORDER,
 } from "@/lib/format";
+
+interface Category {
+  id: string;
+  name: string;
+  type: "INCOME" | "EXPENSE";
+  icon?: string;
+}
+
+const ICON_MAP: Record<string, React.ElementType> = {
+  CreditCard, Heart, DollarSign, Apple, Home, ShoppingCart, Zap, Tag, Bike, Car,
+};
 
 export interface ExpensesCardProps {
   expenses: Expense[];
   year: number;
   month: number;
   onChanged?: () => void;
+  categories?: Category[];
 }
 
 interface ExpenseFormState {
   id: string | null;
-  name: string;
-  type: ExpenseType;
+  categoryId: string;
   value: string;
   status: ExpenseStatus;
   color: string;
   hasEndDate: boolean;
   endYear: string;
-  endYearMode: "preset" | "custom"; // item 2
+  endYearMode: "preset" | "custom";
   endMonth: string;
 }
 
 const DEFAULT_COLOR = EXPENSE_COLOR_PALETTE[0].value;
 const EMPTY: ExpenseFormState = {
   id: null,
-  name: "",
-  type: "FIXED",
+  categoryId: "",
   value: "",
   status: "PENDING",
   color: DEFAULT_COLOR,
@@ -59,59 +68,64 @@ const EMPTY: ExpenseFormState = {
   endMonth: "",
 };
 
-// Item 7 — ícones por tipo
-function ExpenseIcon({ type, color }: { type: ExpenseType; color?: string }) {
+function ExpenseIcon({ color, categoryIcon }: { color?: string; categoryIcon?: string }) {
   const bg = color || "#2D4238";
-  const Icon =
-    type === "FIXED" ? Repeat :
-    type === "CARD" || type === "CARD_SINGLE" ? CreditCard :
-    Banknote;
+  const IconComponent = categoryIcon && ICON_MAP[categoryIcon] ? ICON_MAP[categoryIcon] : Tag;
   return (
     <div
-      className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white"
+      className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
       style={{ background: bg }}
     >
-      <Icon size={16} />
+      <IconComponent size={16} className="text-white" />
     </div>
   );
 }
 
-// Item 6 — ordenação
 function sortExpenses(expenses: Expense[]): Expense[] {
   return [...expenses].sort((a, b) => {
     const aPaid = a.status === "PAID";
     const bPaid = b.status === "PAID";
-    if (aPaid !== bPaid) return aPaid ? 1 : -1; // pagas vão pro fundo
-    const orderDiff = (EXPENSE_TYPE_ORDER[a.type] ?? 9) - (EXPENSE_TYPE_ORDER[b.type] ?? 9);
-    if (orderDiff !== 0) return orderDiff;
-    return Number(b.value) - Number(a.value); // maior valor primeiro
+    if (aPaid !== bPaid) return aPaid ? 1 : -1;
+    return Number(b.value) - Number(a.value);
   });
 }
 
-// Próximos 5 anos para o preset (item 2)
 const NEXT_5_YEARS = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() + i);
 
-export default function ExpensesCard({ expenses, year, month, onChanged }: ExpensesCardProps) {
+export default function ExpensesCard({ expenses, year, month, onChanged, categories: categoriesFromProps = [] }: ExpensesCardProps) {
   const [open, setOpen] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [form, setForm] = useState<ExpenseFormState>(EMPTY);
   const [submitting, setSubmitting] = useState(false);
-  // Ref pra detectar clique fora do Dialog (item 3)
-  const overlayClickRef = useRef(false);
 
-  // Item 3: só fecha se o clique veio do overlay (fora do DialogContent)
+  useEffect(() => {
+    if (categoriesFromProps && categoriesFromProps.length > 0) {
+      const expenseCategories = categoriesFromProps.filter((c: Category) => c.type === "EXPENSE");
+      setCategories(expenseCategories);
+    } else {
+      fetchCategories()
+        .then((data) => {
+          const expenseCategories = data.filter((c: Category) => c.type === "EXPENSE");
+          setCategories(expenseCategories);
+        })
+        .catch(() => toast.error("Erro ao carregar categorias"));
+    }
+  }, [categoriesFromProps]);
+
   const handleOpenChange = useCallback((next: boolean) => {
-    if (!next && !overlayClickRef.current) return; // clique dentro → ignora
-    overlayClickRef.current = false;
     if (!next) setForm(EMPTY);
     setOpen(next);
   }, []);
 
-  const startCreate = () => { setForm(EMPTY); setOpen(true); };
+  const startCreate = () => {
+    setForm(EMPTY);
+    setOpen(true);
+  };
+
   const startEdit = (expense: Expense) => {
     setForm({
       id: expense.id,
-      name: expense.name,
-      type: expense.type,
+      categoryId: expense.categoryId,
       value: String(expense.value),
       status: expense.status,
       color: expense.color || DEFAULT_COLOR,
@@ -123,20 +137,18 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
     setOpen(true);
   };
 
-  // Tipos recorrentes (têm data de término)
-  const isRecurringType = form.type === "FIXED" || form.type === "CARD";
-
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const value = parseBRLInput(form.value);
-    if (!form.name.trim() || !value || value <= 0) {
-      toast.error("Preencha nome e valor (> 0).");
+
+    if (!form.categoryId || !value || value <= 0) {
+      toast.error("Selecione uma categoria e preencha um valor (> 0).");
       return;
     }
 
     let endYear: number | null = null;
     let endMonth: number | null = null;
-    if (isRecurringType && form.hasEndDate) {
+    if (form.hasEndDate) {
       if (!form.endYear || !form.endMonth) {
         toast.error("Selecione mês e ano de término.");
         return;
@@ -151,25 +163,27 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
         await updateExpense(
           form.id,
           {
-            name: form.name.trim(),
+            categoryId: form.categoryId,
             value,
             status: form.status,
             color: form.color,
-            ...(isRecurringType ? { endYear, endMonth } : {}),
+            endYear,
+            endMonth,
           },
-          year, month,
+          year,
+          month,
         );
         toast.success("Despesa atualizada");
       } else {
         await createExpense({
-          name: form.name.trim(),
-          type: form.type,
+          categoryId: form.categoryId,
           value,
           status: form.status,
           color: form.color,
           year,
           month,
-          ...(isRecurringType ? { endYear, endMonth } : {}),
+          endYear,
+          endMonth,
         });
         toast.success("Despesa adicionada");
       }
@@ -187,7 +201,9 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
       await deleteExpense(item.id, year, month, scope);
       toast.success(scope === "all" ? "Removida permanentemente" : "Removida deste mês");
       onChanged?.();
-    } catch { toast.error("Erro ao remover"); }
+    } catch {
+      toast.error("Erro ao remover");
+    }
   };
 
   const toggleStatus = async (item: Expense) => {
@@ -195,39 +211,50 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
       await updateExpense(
         item.id,
         { status: item.status === "PAID" ? "PENDING" : "PAID" },
-        year, month,
+        year,
+        month,
       );
       onChanged?.();
-    } catch { toast.error("Erro ao atualizar status"); }
+    } catch {
+      toast.error("Erro ao atualizar status");
+    }
+  };
+
+  const getCategoryName = (categoryId: string) => {
+    return categories.find((c) => c.id === categoryId)?.name || categoryId;
+  };
+
+  const getCategoryIcon = (categoryId: string) => {
+    return categories.find((c) => c.id === categoryId)?.icon || "Tag";
   };
 
   const total = expenses.reduce((acc, e) => acc + Number(e.value || 0), 0);
   const sorted = sortExpenses(expenses);
 
   return (
-    <div className="bg-white border border-[#EAE7E1] rounded-2xl p-4 sm:p-6">
+    <div className="bg-white dark:bg-[#1a1a1a] border border-[#EAE7E1] dark:border-[#333] rounded-2xl p-4 sm:p-6 transition-colors">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-eyebrow">Despesas</div>
-          <h2 className="font-display text-xl sm:text-2xl font-semibold mt-1 tracking-tight">
+          <div className="text-eyebrow dark:text-[#a0a0a0]">Despesas</div>
+          <h2 className="font-display text-xl sm:text-2xl font-semibold mt-1 tracking-tight dark:text-white">
             Saídas do mês
           </h2>
-          <div className="text-sm text-[#6B6A65] mt-1">
-            Total: <span className="font-medium text-[#1C1C19]">{formatBRL(total)}</span>
+          <div className="text-sm text-[#6B6A65] dark:text-[#a0a0a0] mt-1">
+            Total: <span className="font-medium text-[#1C1C19] dark:text-white">{formatBRL(total)}</span>
           </div>
         </div>
         <button
           data-testid={DASHBOARD.addExpense}
           onClick={startCreate}
-          className="inline-flex items-center gap-2 bg-[#2D4238] text-white hover:bg-[#3C5749] rounded-full px-4 sm:px-5 py-2.5 text-sm font-medium transition-colors"
+          className="inline-flex items-center gap-2 bg-[#ec0000] dark:bg-[#cc0000] text-white hover:bg-[#ff1111] dark:hover:bg-[#ec0000] rounded-full px-4 sm:px-5 py-2.5 text-sm font-medium transition-colors"
         >
           <Plus size={16} /> <span className="hidden sm:inline">Adicionar</span>
         </button>
       </div>
 
-      <ul data-testid={DASHBOARD.expenseList} className="divide-y divide-[#EAE7E1]">
+      <ul data-testid={DASHBOARD.expenseList} className="divide-y divide-[#EAE7E1] dark:divide-[#333]">
         {sorted.length === 0 && (
-          <li className="py-10 text-center text-sm text-[#9A9892]">
+          <li className="py-10 text-center text-sm text-[#9A9892] dark:text-[#707070]">
             Nenhuma despesa registrada neste mês.
           </li>
         )}
@@ -237,15 +264,18 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
             <li
               key={ex.id}
               data-testid={DASHBOARD.expenseItem(ex.id)}
-              className={`py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-3 transition-opacity ${isPaid ? "opacity-60" : ""}`}
+              className={`py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-3 transition-opacity ${
+                isPaid ? "opacity-60" : ""
+              }`}
             >
               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                <ExpenseIcon type={ex.type} color={ex.color} />
+                <ExpenseIcon color={ex.color} categoryIcon={getCategoryIcon(ex.categoryId)} />
                 <div className="min-w-0">
-                  <div className="font-medium text-[#1C1C19] truncate text-sm sm:text-base">{ex.name}</div>
-                  <div className="text-xs text-[#6B6A65] uppercase tracking-wider">
-                    {EXPENSE_TYPE_LABEL[ex.type]}
-                    {ex.recurring ? " · Recorrente" : ""}
+                  <div className="font-medium text-[#1C1C19] dark:text-white truncate text-sm sm:text-base">
+                    {getCategoryName(ex.categoryId)}
+                  </div>
+                  <div className="text-xs text-[#6B6A65] dark:text-[#707070] uppercase tracking-wider">
+                    {ex.recurring ? "Recorrente" : "Avulso"}
                   </div>
                 </div>
               </div>
@@ -256,38 +286,44 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
                   onClick={() => toggleStatus(ex)}
                   className={`inline-flex items-center gap-1 sm:gap-1.5 rounded-full px-2 sm:px-3 py-1 text-xs font-medium uppercase tracking-wider transition-colors ${
                     isPaid
-                      ? "bg-[#EDF2ED] text-[#4A6B4A] hover:bg-[#dde6dd]"
-                      : "bg-[#FDF6EA] text-[#C68B35] hover:bg-[#f5ead2]"
+                      ? "bg-[#EDF2ED] dark:bg-[#1a3a1e] text-[#4A6B4A] dark:text-[#5a8c5e] hover:bg-[#dde6dd] dark:hover:bg-[#2a4a2e]"
+                      : "bg-[#FDF6EA] dark:bg-[#3a2f1a] text-[#C68B35] dark:text-[#d9a043] hover:bg-[#f5ead2] dark:hover:bg-[#4a3f2a]"
                   }`}
                 >
                   {isPaid ? <Check size={12} /> : <Clock size={12} />}
                   <span className="hidden sm:inline">{EXPENSE_STATUS_LABEL[ex.status]}</span>
                 </button>
-                <div className="font-display font-semibold text-[#1C1C19] tabular-nums text-sm sm:text-base">
+                <div className="font-display font-semibold text-[#1C1C19] dark:text-white tabular-nums text-sm sm:text-base">
                   {formatBRL(Number(ex.value))}
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
                       data-testid={DASHBOARD.expenseDelete(ex.id)}
-                      className="w-8 h-8 rounded-full hover:bg-[#F3F1ED] flex items-center justify-center text-[#6B6A65] transition-colors"
+                      className="w-8 h-8 rounded-full hover:bg-[#F3F1ED] dark:hover:bg-[#2a2a2a] flex items-center justify-center text-[#6B6A65] dark:text-[#707070] transition-colors"
                       aria-label="Opções"
                     >
                       <MoreHorizontal size={16} />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem data-testid={DASHBOARD.expenseEdit(ex.id)} onClick={() => startEdit(ex)}>
-                      <Pencil size={14} className="mr-2" /> Editar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onDelete(ex, "month")}>
+                  <DropdownMenuContent align="end" className="w-56 dark:bg-[#1a1a1a] dark:border-[#333]">
+                    {ex.status === "PENDING" && (
+                      <DropdownMenuItem
+                        data-testid={DASHBOARD.expenseEdit(ex.id)}
+                        onClick={() => startEdit(ex)}
+                        className="dark:text-white dark:hover:bg-[#2a2a2a]"
+                      >
+                        <Pencil size={14} className="mr-2" /> Editar
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem onClick={() => onDelete(ex, "month")} className="dark:text-white dark:hover:bg-[#2a2a2a]">
                       <Trash2 size={14} className="mr-2" /> Remover deste mês
                     </DropdownMenuItem>
                     {ex.recurring && (
                       <DropdownMenuItem
                         data-testid={DASHBOARD.expenseDeleteAll(ex.id)}
                         onClick={() => onDelete(ex, "all")}
-                        className="text-[#B34A3E]"
+                        className="text-[#B34A3E] dark:text-[#ff8a80] dark:hover:bg-[#2a2a2a]"
                       >
                         <Trash2 size={14} className="mr-2" /> Remover recorrência
                       </DropdownMenuItem>
@@ -300,58 +336,41 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
         })}
       </ul>
 
-      {/* Item 3: onPointerDown no overlay detecta clique fora do card */}
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent
           data-testid={MODAL.expenseDialog}
           className="sm:max-w-[460px] rounded-2xl"
-          onPointerDownOutside={() => { overlayClickRef.current = true; }}
-          onInteractOutside={() => { overlayClickRef.current = true; }}
+          onInteractOutside={(e) => e.preventDefault()}
         >
           <DialogHeader>
-            <DialogTitle className="font-display tracking-tight">
+            <DialogTitle className="font-display tracking-tight dark:text-white">
               {form.id ? "Editar despesa" : "Nova despesa"}
             </DialogTitle>
-            <DialogDescription>
-              Fixas e Cartão recorrente se repetem mensalmente. Cartão e Avulsa aparecem só no mês cadastrado.
+            <DialogDescription className="dark:text-[#a0a0a0]">
+              Despesas com data de término se repetem mensalmente até a data especificada.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={submit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="expense-name">Nome</Label>
-              <Input
-                id="expense-name"
-                data-testid={MODAL.expenseName}
-                value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                placeholder="Ex: Aluguel"
-                autoFocus
-              />
+              <Label>Categoria</Label>
+              <Select
+                value={form.categoryId}
+                onValueChange={(v) => setForm((f) => ({ ...f, categoryId: v }))}
+              >
+                <SelectTrigger data-testid={MODAL.expenseType}>
+                  <SelectValue placeholder="Selecione uma categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Tipo</Label>
-                <Select
-                  value={form.type}
-                  onValueChange={(v: ExpenseType) =>
-                    setForm((f) => ({
-                      ...f, type: v,
-                      hasEndDate: (v === "DETACHED" || v === "CARD_SINGLE") ? false : f.hasEndDate,
-                    }))
-                  }
-                  disabled={!!form.id}
-                >
-                  <SelectTrigger data-testid={MODAL.expenseType}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="FIXED">Fixa (recorrente)</SelectItem>
-                    <SelectItem value="CARD">Cartão (recorrente)</SelectItem>
-                    <SelectItem value="CARD_SINGLE">Cartão (avulso)</SelectItem>
-                    <SelectItem value="DETACHED">Avulsa</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
               <div className="space-y-2">
                 <Label htmlFor="expense-value">Valor (R$)</Label>
                 <Input
@@ -363,106 +382,110 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
                   placeholder="0,00"
                 />
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select
-                value={form.status}
-                onValueChange={(v: ExpenseStatus) => setForm((f) => ({ ...f, status: v }))}
-              >
-                <SelectTrigger data-testid={MODAL.expenseStatus}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PENDING">Pendente</SelectItem>
-                  <SelectItem value="PAID">Paga</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select
+                  value={form.status}
+                  onValueChange={(v: ExpenseStatus) => setForm((f) => ({ ...f, status: v }))}
+                >
+                  <SelectTrigger data-testid={MODAL.expenseStatus}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PENDING">Pendente</SelectItem>
+                    <SelectItem value="PAID">Paga</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            {/* Item 2 — data de término com preset de anos */}
-            {isRecurringType && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Data de término</Label>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setForm((f) => ({ ...f, hasEndDate: !f.hasEndDate, endYear: "", endMonth: "" }))
-                    }
-                    className="text-xs font-medium text-[#2D4238] hover:underline"
-                  >
-                    {form.hasEndDate ? "Remover término" : "Definir término"}
-                  </button>
-                </div>
-                {form.hasEndDate ? (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      {/* Mês */}
-                      <Select value={form.endMonth} onValueChange={(v) => setForm((f) => ({ ...f, endMonth: v }))}>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Data de término</Label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setForm((f) => ({ ...f, hasEndDate: !f.hasEndDate, endYear: "", endMonth: "" }))
+                  }
+                  className="text-xs font-medium text-[#ec0000] dark:text-[#ff8a80] hover:underline"
+                >
+                  {form.hasEndDate ? "Remover término" : "Definir término"}
+                </button>
+              </div>
+              {form.hasEndDate ? (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Select
+                      value={form.endMonth}
+                      onValueChange={(v) => setForm((f) => ({ ...f, endMonth: v }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Mês" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MONTHS_PT.map((label, idx) => (
+                          <SelectItem key={idx + 1} value={String(idx + 1)}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {form.endYearMode === "preset" ? (
+                      <Select
+                        value={form.endYear}
+                        onValueChange={(v) => {
+                          if (v === "other") {
+                            setForm((f) => ({ ...f, endYearMode: "custom", endYear: "" }));
+                          } else {
+                            setForm((f) => ({ ...f, endYear: v }));
+                          }
+                        }}
+                      >
                         <SelectTrigger>
-                          <SelectValue placeholder="Mês" />
+                          <SelectValue placeholder="Ano" />
                         </SelectTrigger>
                         <SelectContent>
-                          {MONTHS_PT.map((label, idx) => (
-                            <SelectItem key={idx + 1} value={String(idx + 1)}>{label}</SelectItem>
+                          {NEXT_5_YEARS.map((y) => (
+                            <SelectItem key={y} value={String(y)}>
+                              {y}
+                            </SelectItem>
                           ))}
+                          <SelectItem value="other">Outro...</SelectItem>
                         </SelectContent>
                       </Select>
-
-                      {/* Ano — preset ou campo livre */}
-                      {form.endYearMode === "preset" ? (
-                        <Select
+                    ) : (
+                      <div className="flex gap-1">
+                        <Input
+                          inputMode="numeric"
                           value={form.endYear}
-                          onValueChange={(v) => {
-                            if (v === "other") {
-                              setForm((f) => ({ ...f, endYearMode: "custom", endYear: "" }));
-                            } else {
-                              setForm((f) => ({ ...f, endYear: v }));
-                            }
-                          }}
+                          onChange={(e) =>
+                            setForm((f) => ({ ...f, endYear: e.target.value.replace(/\D/g, "") }))
+                          }
+                          placeholder="Ano"
+                          className="flex-1"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setForm((f) => ({ ...f, endYearMode: "preset", endYear: "" }))}
+                          className="text-xs text-[#6B6A65] dark:text-[#707070] hover:text-[#1C1C19] dark:hover:text-white px-1"
+                          title="Voltar para lista"
                         >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Ano" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {NEXT_5_YEARS.map((y) => (
-                              <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-                            ))}
-                            <SelectItem value="other">Outro...</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <div className="flex gap-1">
-                          <Input
-                            inputMode="numeric"
-                            value={form.endYear}
-                            onChange={(e) =>
-                              setForm((f) => ({ ...f, endYear: e.target.value.replace(/\D/g, "") }))
-                            }
-                            placeholder="Ano"
-                            className="flex-1"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setForm((f) => ({ ...f, endYearMode: "preset", endYear: "" }))}
-                            className="text-xs text-[#6B6A65] hover:text-[#1C1C19] px-1"
-                            title="Voltar para lista"
-                          >✕</button>
-                        </div>
-                      )}
-                    </div>
+                          ✕
+                        </button>
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <p className="text-xs text-[#9A9892]">
-                    Sem data definida, a despesa se repete indefinidamente todos os meses.
-                  </p>
-                )}
-              </div>
-            )}
+                </div>
+              ) : (
+                <p className="text-xs text-[#9A9892] dark:text-[#707070]">
+                  Sem data definida, a despesa é criada apenas este mês.
+                </p>
+              )}
+            </div>
 
             <div className="space-y-2">
-              <Label>Cor da despesa (gráfico)</Label>
+              <Label>Cor da despesa</Label>
               <div data-testid="expense-color-picker" className="grid grid-cols-6 gap-2">
                 {EXPENSE_COLOR_PALETTE.map((c) => {
                   const selected = form.color === c.value;
@@ -476,8 +499,8 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
                       aria-pressed={selected}
                       className={`h-8 w-full rounded-lg border transition-all duration-150 ${
                         selected
-                          ? "ring-2 ring-offset-2 ring-[#2D4238] border-transparent scale-105"
-                          : "border-[#EAE7E1] hover:scale-105"
+                          ? "ring-2 ring-offset-2 ring-[#ec0000] dark:ring-[#ff8a80] border-transparent scale-105"
+                          : "border-[#EAE7E1] dark:border-[#333] hover:scale-105"
                       }`}
                       style={{ background: c.value }}
                     />
@@ -490,8 +513,8 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
               <button
                 type="button"
                 data-testid={MODAL.expenseCancel}
-                onClick={() => { overlayClickRef.current = true; setOpen(false); }}
-                className="rounded-full px-5 py-2 text-sm font-medium hover:bg-[#F3F1ED] transition-colors"
+                onClick={() => setOpen(false)}
+                className="rounded-full px-5 py-2 text-sm font-medium hover:bg-[#F3F1ED] dark:hover:bg-[#2a2a2a] dark:text-white transition-colors"
               >
                 Cancelar
               </button>
@@ -499,7 +522,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged }: Expen
                 type="submit"
                 data-testid={MODAL.expenseSubmit}
                 disabled={submitting}
-                className="rounded-full bg-[#2D4238] text-white hover:bg-[#3C5749] px-5 py-2 text-sm font-medium transition-colors disabled:opacity-60"
+                className="rounded-full bg-[#ec0000] dark:bg-[#cc0000] text-white hover:bg-[#ff1111] dark:hover:bg-[#ec0000] px-5 py-2 text-sm font-medium transition-colors disabled:opacity-60"
               >
                 {submitting ? "Salvando..." : form.id ? "Atualizar" : "Salvar"}
               </button>

@@ -15,6 +15,7 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
+  categories      Category[]
   billings        Billing[]
   expenses        Expense[]
   recurrenceSkips RecurrenceSkip[]
@@ -22,44 +23,67 @@ model User {
   @@map("users")
 }
 
-model Billing {
-  id          String      @id @default(uuid())
-  name        String
-  type        BillingType
-  value       Decimal     @db.Decimal(10, 2)
-  recurring   Boolean     @default(false)
-  startYear   Int?
-  startMonth  Int?
-  year        Int?
-  month       Int?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+model Category {
+  id        String   @id @default(uuid())
+  name      String
+  type      CategoryType
+  icon      String   @default("Tag")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  userId      String
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  billings  Billing[]
+  expenses  Expense[]
+
+  @@unique([userId, name])
+  @@map("categories")
+}
+
+model Billing {
+  id            String      @id @default(uuid())
+  value         Decimal     @db.Decimal(10, 2)
+  description   String?
+  recurring     Boolean     @default(false)
+  year          Int?
+  month         Int?
+  monthCreated  Int?
+  yearCreated   Int?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  categoryId    String
+  category      Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 
   @@map("billings")
 }
 
 model Expense {
-  id          String        @id @default(uuid())
-  name        String
-  type        ExpenseType
-  status      ExpenseStatus
-  value       Decimal       @db.Decimal(10, 2)
-  color       String        @default("#2D4238")
-  recurring   Boolean       @default(false)
-  startYear   Int?
-  startMonth  Int?
-  endYear     Int?
-  endMonth    Int?
-  year        Int?
-  month       Int?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id            String        @id @default(uuid())
+  status        ExpenseStatus
+  value         Decimal       @db.Decimal(10, 2)
+  color         String        @default("#820AD1")
+  recurring     Boolean       @default(false)
+  startYear     Int?
+  startMonth    Int?
+  endYear       Int?
+  endMonth      Int?
+  year          Int?
+  month         Int?
+  monthCreated  Int?
+  yearCreated   Int?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
-  userId      String
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  categoryId    String
+  category      Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 
   @@map("expenses")
 }
@@ -78,16 +102,9 @@ model RecurrenceSkip {
   @@map("recurrence_skips")
 }
 
-enum BillingType {
-  SALARY
-  AWARD
-}
-
-enum ExpenseType {
-  FIXED
-  CARD
-  CARD_SINGLE
-  DETACHED
+enum CategoryType {
+  INCOME
+  EXPENSE
 }
 
 enum ExpenseStatus {

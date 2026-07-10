@@ -101,6 +101,22 @@
 }
 
 .dark {
+    /* Dark mode app colors */
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface-2: #2a2a2a;
+    --border-app: #333;
+    --text-1: #f0f0f0;
+    --text-2: #a0a0a0;
+    --text-3: #707070;
+    --primary-app: #4a7c4e;
+    --primary-hover: #5a8c5e;
+    --positive: #5a8c5e;
+    --positive-bg: #1a3a1e;
+    --negative: #d46560;
+    --negative-bg: #3a1f1c;
+    --warning: #d9a043;
+    --warning-bg: #3a2f1a;
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
     --card: oklch(0.205 0 0);

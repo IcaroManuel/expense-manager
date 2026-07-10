@@ -3,15 +3,17 @@ import { EventHub } from '../common/patterns/event-hub';
 
 // Tipos baseados nas entidades do Domain
 export interface BillingCreate {
-  name: string;
-  type: string;
+  categoryId: string;
   value: number;
+  description?: string;
+  recurring?: boolean;
   year: number;
   month: number;
 }
 export interface BillingUpdate {
-  name?: string;
   value?: number;
+  description?: string;
+  recurring?: boolean;
 }
 
 // Tokens de injeção e Interfaces para os Repositórios
@@ -46,8 +48,6 @@ export interface IRecurrenceSkipRepository {
   ): Promise<void>;
 }
 
-const RECURRING_BILLING_TYPES = ['SALARY']; // Idealmente virá do Enum de Domain
-
 @Injectable()
 export class BillingsService {
   constructor(
@@ -63,9 +63,9 @@ export class BillingsService {
   private materializeBilling(doc: any, year: number, month: number): any {
     return {
       id: doc.id,
-      name: doc.name,
-      type: doc.type,
+      categoryId: doc.categoryId,
       value: doc.value,
+      description: doc.description,
       recurring: doc.recurring || false,
       year,
       month,
@@ -97,26 +97,28 @@ export class BillingsService {
 
     out.sort(
       (a, b) =>
-        a.type.localeCompare(b.type) ||
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
     );
     return out;
   }
 
   async create(userId: string, payload: BillingCreate): Promise<any> {
-    const isRecurring = RECURRING_BILLING_TYPES.includes(payload.type);
+    const isRecurring = payload.recurring || false;
+    const now = new Date();
+    const yearCreated = now.getFullYear();
+    const monthCreated = now.getMonth() + 1;
 
     const billing = {
-      id: crypto.randomUUID(), // Temporário até a injeção da Entity
+      id: crypto.randomUUID(),
       userId,
-      name: payload.name,
-      type: payload.type,
+      categoryId: payload.categoryId,
       value: payload.value,
+      description: payload.description,
       recurring: isRecurring,
-      startYear: isRecurring ? payload.year : null,
-      startMonth: isRecurring ? payload.month : null,
       year: isRecurring ? null : payload.year,
       month: isRecurring ? null : payload.month,
+      yearCreated,
+      monthCreated,
     };
 
     await this.repo.insert(billing);
@@ -133,8 +135,9 @@ export class BillingsService {
     month: number,
   ): Promise<any | null> {
     const fields: any = {};
-    if (payload.name !== undefined) fields.name = payload.name;
     if (payload.value !== undefined) fields.value = payload.value;
+    if (payload.description !== undefined) fields.description = payload.description;
+    if (payload.recurring !== undefined) fields.recurring = payload.recurring;
 
     const updated = await this.repo.updateFields(userId, billingId, fields);
     if (!updated) return null;

@@ -6,8 +6,7 @@ import {
 } from '../billings/billings.service';
 
 export interface ExpenseCreate {
-  name: string;
-  type: string;
+  categoryId: string;
   status: string;
   color?: string;
   value: number;
@@ -17,7 +16,7 @@ export interface ExpenseCreate {
   endMonth?: number | null;
 }
 export interface ExpenseUpdate {
-  name?: string;
+  categoryId?: string;
   value?: number;
   status?: string;
   color?: string;
@@ -34,8 +33,6 @@ export interface IExpenseRepository {
   delete(userId: string, expenseId: string): Promise<void>;
 }
 
-// Cartão agora também é recorrente (corrige inconsistência com domain/enums.ts)
-const RECURRING_EXPENSE_TYPES = ['FIXED', 'CARD'];
 const PENDING_STATUS = 'PENDING';
 
 @Injectable()
@@ -53,11 +50,10 @@ export class ExpensesService {
   private materializeExpense(doc: any, year: number, month: number): any {
     return {
       id: doc.id,
-      name: doc.name,
-      type: doc.type,
+      categoryId: doc.categoryId,
       value: doc.value,
       status: doc.status || PENDING_STATUS,
-      color: doc.color || '#2D4238',
+      color: doc.color || '#820AD1',
       recurring: doc.recurring || false,
       endYear: doc.endYear ?? null,
       endMonth: doc.endMonth ?? null,
@@ -91,14 +87,16 @@ export class ExpensesService {
 
     out.sort(
       (a, b) =>
-        a.type.localeCompare(b.type) ||
-        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     );
     return out;
   }
 
   async create(userId: string, payload: ExpenseCreate): Promise<any> {
-    const isRecurring = RECURRING_EXPENSE_TYPES.includes(payload.type);
+    const isRecurring = payload.endYear != null && payload.endMonth != null;
+    const now = new Date();
+    const yearCreated = now.getFullYear();
+    const monthCreated = now.getMonth() + 1;
 
     if (isRecurring && payload.endYear != null && payload.endMonth != null) {
       const endIndex = payload.endYear * 12 + payload.endMonth;
@@ -113,18 +111,19 @@ export class ExpensesService {
     const expense = {
       id: crypto.randomUUID(),
       userId,
-      name: payload.name,
-      type: payload.type,
+      categoryId: payload.categoryId,
       value: payload.value,
       status: payload.status,
-      color: payload.color,
+      color: payload.color || '#820AD1',
       recurring: isRecurring,
       startYear: isRecurring ? payload.year : null,
       startMonth: isRecurring ? payload.month : null,
-      endYear: isRecurring ? (payload.endYear ?? null) : null,
-      endMonth: isRecurring ? (payload.endMonth ?? null) : null,
+      endYear: isRecurring ? payload.endYear : null,
+      endMonth: isRecurring ? payload.endMonth : null,
       year: isRecurring ? null : payload.year,
       month: isRecurring ? null : payload.month,
+      yearCreated,
+      monthCreated,
     };
 
     await this.repo.insert(expense);
@@ -140,8 +139,17 @@ export class ExpensesService {
     year: number,
     month: number,
   ): Promise<any | null> {
+    const existing = await this.repo.findById(userId, expenseId);
+    if (!existing) return null;
+
+    if (existing.status === 'PAID') {
+      throw new BadRequestException(
+        'Não é possível editar uma despesa com status pago.',
+      );
+    }
+
     const fields: any = {};
-    if (payload.name !== undefined) fields.name = payload.name;
+    if (payload.categoryId !== undefined) fields.categoryId = payload.categoryId;
     if (payload.value !== undefined) fields.value = payload.value;
     if (payload.status !== undefined) fields.status = payload.status;
     if (payload.color !== undefined) fields.color = payload.color;

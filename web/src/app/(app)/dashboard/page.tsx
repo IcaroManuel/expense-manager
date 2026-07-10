@@ -6,7 +6,7 @@ import BillingsCard from "@/components/dashboard/BillingsCard";
 import ExpensesCard from "@/components/dashboard/ExpensesCard";
 import SpendingChart from "@/components/dashboard/SpendingChart";
 import SummaryCards from "@/components/dashboard/SummaryCards";
-import { fetchBillings, fetchExpenses, fetchSummary } from "@/lib/api";
+import { fetchBillings, fetchExpenses, fetchSummary, fetchCategories } from "@/lib/api";
 import { DASHBOARD } from "@/constants/test-ids";
 import { Summary } from "@/dtos/summary";
 
@@ -18,6 +18,7 @@ export default function Dashboard() {
   const [expenses, setExpenses] = useState([]);
   const [summary, setSummary] = useState<Summary>({} as Summary);
   const [previousSummary, setPreviousSummary] = useState<Summary | null>(null);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [firstYear, setFirstYear] = useState<number | undefined>(undefined);
 
@@ -28,16 +29,18 @@ export default function Dashboard() {
     setLoading(true);
     const prev = getPreviousMonthYear(year, month);
     try {
-      const [b, e, s, ps] = await Promise.all([
+      const [b, e, s, ps, c] = await Promise.all([
         fetchBillings(year, month),
         fetchExpenses(year, month),
         fetchSummary(year, month),
         fetchSummary(prev.year, prev.month),
+        fetchCategories(),
       ]);
       setBillings(b);
       setExpenses(e);
       setSummary(s);
       setPreviousSummary(ps);
+      setCategories(c);
 
       if (firstYear === undefined && e.length > 0) {
         setFirstYear(year);
@@ -70,8 +73,8 @@ export default function Dashboard() {
       </section>
 
       <section className={`grid grid-cols-1 lg:grid-cols-3 gap-6 items-start transition-opacity duration-200 ${loading ? "opacity-50 pointer-events-none" : ""}`}>
-        <BillingsCard billings={billings} year={year} month={month} onChanged={refresh} summary={summary} previousSummary={previousSummary} />
-        <ExpensesCard expenses={expenses} year={year} month={month} onChanged={refresh} />
+        <BillingsCard billings={billings} year={year} month={month} onChanged={refresh} summary={summary} previousSummary={previousSummary} categories={categories} />
+        <ExpensesCard expenses={expenses} year={year} month={month} onChanged={refresh} categories={categories} />
         <SpendingChart summary={summary} />
       </section>
     </div>

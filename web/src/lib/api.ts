@@ -44,6 +44,18 @@ export const logoutApi = () => api.post("/auth/logout").then((r) => r.data);
 export const exchangeSession = (sessionId: string) =>
   api.post("/auth/session", { session_id: sessionId }).then((r) => r.data);
 
+export const fetchCategories = () =>
+  api.get("/categories").then((r) => r.data);
+
+export const createCategory = (payload: any) =>
+  api.post("/categories", payload).then((r) => r.data);
+
+export const updateCategory = (id: string, payload: any) =>
+  api.patch(`/categories/${id}`, payload).then((r) => r.data);
+
+export const deleteCategory = (id: string) =>
+  api.delete(`/categories/${id}`);
+
 export const fetchBillings = (year: number, month: number) =>
   api.get("/billings", { params: { year, month } }).then((r) => r.data);
 

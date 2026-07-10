@@ -17,16 +17,17 @@ export const MONTH_SHORT_PT = [
   "Jul","Ago","Set","Out","Nov","Dez",
 ] as const;
 
-export const BILLING_TYPE_LABEL: Record<string, string> = {
-  SALARY: "Salário",
-  AWARD: "Prêmio",
+export const CATEGORY_TYPE_LABEL: Record<string, string> = {
+  INCOME: "Entrada",
+  EXPENSE: "Saída",
 };
 
-export const EXPENSE_TYPE_LABEL: Record<string, string> = {
-  FIXED: "Fixa",
-  CARD: "Cartão (recorrente)",
-  CARD_SINGLE: "Cartão",
-  DETACHED: "Avulsa",
+export const INCOME_TYPE_LABEL: Record<string, string> = {
+  SALARY: "Salário",
+  AWARD: "Prêmios",
+  FOOD: "Alimentação",
+  TRANSPORT: "Transporte",
+  OTHER: "Outros",
 };
 
 export const EXPENSE_STATUS_LABEL: Record<string, string> = {
@@ -34,32 +35,17 @@ export const EXPENSE_STATUS_LABEL: Record<string, string> = {
   PENDING: "Pendente",
 };
 
-export const EXPENSE_TYPE_COLOR: Record<string, string> = {
-  FIXED: "#2D4238",
-  CARD: "#4A6B4A",
-  CARD_SINGLE: "#4A6B4A",
-  DETACHED: "#C68B35",
-};
-
-// Ordem de exibição: FIXED → CARD → CARD_SINGLE → DETACHED (item 6)
-export const EXPENSE_TYPE_ORDER: Record<string, number> = {
-  FIXED: 0,
-  CARD: 1,
-  CARD_SINGLE: 2,
-  DETACHED: 3,
-};
-
 export const EXPENSE_COLOR_PALETTE = [
+  { value: "#820AD1", label: "Roxo Vivido" },
+  { value: "#FF7200", label: "Laranja Vivido" },
+  { value: "#ec0000", label: "Vermelho Vivido" },
   { value: "#2D4238", label: "Verde escuro" },
   { value: "#4A6B4A", label: "Verde médio" },
   { value: "#8FBF8A", label: "Verde claro" },
   { value: "#3B82F6", label: "Azul" },
   { value: "#06B6D4", label: "Ciano" },
-  { value: "#8B5CF6", label: "Roxo" },
   { value: "#EC4899", label: "Rosa" },
   { value: "#F59E0B", label: "Âmbar" },
-  { value: "#C68B35", label: "Caramelo" },
-  { value: "#B34A3E", label: "Vermelho" },
   { value: "#0F172A", label: "Carvão" },
   { value: "#9A9892", label: "Cinza" },
 ] as const;

@@ -1,9 +1,7 @@
-export type BillingType = "SALARY" | "AWARD";
-
 export interface Billing {
   id: string;
-  name: string;
-  type: BillingType;
+  categoryId: string;
   value: number | string;
+  description?: string;
   recurring?: boolean;
 }

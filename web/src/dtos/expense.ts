@@ -1,10 +1,15 @@
-export type ExpenseType = "FIXED" | "CARD" | "CARD_SINGLE" | "DETACHED";
 export type ExpenseStatus = "PENDING" | "PAID";
+
+export interface Category {
+  id: string;
+  name: string;
+  type: "INCOME" | "EXPENSE";
+  icon?: string;
+}
 
 export interface Expense {
   id: string;
-  name: string;
-  type: ExpenseType;
+  categoryId: string;
   value: number | string;
   status: ExpenseStatus;
   color?: string;

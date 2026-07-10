@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
+import { CategoriesModule } from './categories/categories.module';
 import { BillingsModule } from './billings/billings.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { SummaryModule } from './summary/summary.module';
@@ -13,6 +14,7 @@ import { APP_GUARD } from '@nestjs/core';
   imports: [
     PrismaModule,
     AuthModule,
+    CategoriesModule,
     BillingsModule,
     ExpensesModule,
     SummaryModule,

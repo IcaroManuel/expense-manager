@@ -46,17 +46,17 @@ function Dropdown({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1 font-display text-base font-semibold tracking-tight text-[#1C1C19] hover:text-[#2D4238] transition-colors disabled:opacity-40 outline-none group"
+        className="flex items-center gap-1 font-display text-base font-semibold tracking-tight text-[#1C1C19] dark:text-white hover:text-[#2D4238] dark:hover:text-[#4a7c4e] transition-colors disabled:opacity-40 outline-none group"
       >
         <span>{label}</span>
         <ChevronDown
           size={14}
-          className={`text-[#9A9892] group-hover:text-[#2D4238] transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          className={`text-[#9A9892] dark:text-[#707070] group-hover:text-[#2D4238] dark:group-hover:text-[#4a7c4e] transition-transform duration-200 ${open ? "rotate-180" : ""}`}
         />
       </button>
 
       {open && (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 bg-white border border-[#EAE7E1] rounded-2xl shadow-lg overflow-hidden min-w-[140px]">
+        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 bg-white dark:bg-[#1a1a1a] border border-[#EAE7E1] dark:border-[#333] rounded-2xl shadow-lg dark:shadow-2xl overflow-hidden min-w-[140px]">
           <div className="max-h-[240px] overflow-y-auto py-1">
             {options.map((opt) => (
               <button
@@ -68,8 +68,8 @@ function Dropdown({
                 }}
                 className={`w-full text-left px-4 py-2 text-sm transition-colors ${
                   opt.value === value
-                    ? "bg-[#2D4238] text-white font-medium"
-                    : "text-[#1C1C19] hover:bg-[#F3F1ED]"
+                    ? "bg-[#2D4238] dark:bg-[#4a7c4e] text-white font-medium"
+                    : "text-[#1C1C19] dark:text-white hover:bg-[#F3F1ED] dark:hover:bg-[#2a2a2a]"
                 }`}
               >
                 {opt.label}
@@ -113,7 +113,7 @@ export default function MonthSelector({
           data-testid={DASHBOARD.monthPrev}
           onClick={prev}
           disabled={loading}
-          className="w-9 h-9 rounded-full border border-[#EAE7E1] flex items-center justify-center text-[#1C1C19] hover:bg-[#F3F1ED] transition-colors disabled:opacity-40"
+          className="w-9 h-9 rounded-full border border-[#EAE7E1] dark:border-[#333] flex items-center justify-center text-[#1C1C19] dark:text-white hover:bg-[#F3F1ED] dark:hover:bg-[#2a2a2a] transition-colors disabled:opacity-40"
           aria-label="Mês anterior"
         >
           <ChevronLeft size={18} />
@@ -121,7 +121,7 @@ export default function MonthSelector({
 
         {/* Centro com os dois dropdowns */}
         <div className="flex flex-col items-center gap-0.5 min-w-[180px]">
-          <div className="text-[10px] uppercase tracking-widest text-[#9A9892] font-medium">
+          <div className="text-[10px] uppercase tracking-widest text-[#9A9892] dark:text-[#707070] font-medium">
             Mês de referência
           </div>
           <div className="flex items-center gap-2">
@@ -132,7 +132,7 @@ export default function MonthSelector({
               onChange={(v) => onChange(year, Number(v))}
               disabled={loading}
             />
-            <span className="text-[#D4D0C8] font-light select-none">/</span>
+            <span className="text-[#D4D0C8] dark:text-[#444] font-light select-none">/</span>
             <Dropdown
               value={String(year)}
               label={String(year)}
@@ -147,7 +147,7 @@ export default function MonthSelector({
           data-testid={DASHBOARD.monthNext}
           onClick={next}
           disabled={loading}
-          className="w-9 h-9 rounded-full border border-[#EAE7E1] flex items-center justify-center text-[#1C1C19] hover:bg-[#F3F1ED] transition-colors disabled:opacity-40"
+          className="w-9 h-9 rounded-full border border-[#EAE7E1] dark:border-[#333] flex items-center justify-center text-[#1C1C19] dark:text-white hover:bg-[#F3F1ED] dark:hover:bg-[#2a2a2a] transition-colors disabled:opacity-40"
           aria-label="Próximo mês"
         >
           <ChevronRight size={18} />
@@ -155,7 +155,7 @@ export default function MonthSelector({
       </div>
 
       {loading && (
-        <div className="flex items-center gap-1.5 text-xs text-[#9A9892]">
+        <div className="flex items-center gap-1.5 text-xs text-[#9A9892] dark:text-[#707070]">
           <Loader2 size={12} className="animate-spin" />
           Carregando...
         </div>

@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { BillingsService } from '../billings/billings.service';
 import { ExpensesService } from '../expenses/expenses.service';
+import { CategoriesService } from '../categories/categories.service';
 import {
   SumValueStrategy,
   FilteredSumStrategy,
   CommittedPercentageStrategy,
   GroupByTypeStrategy,
+  GroupByCategoryStrategy,
 } from '../common/patterns/strategies';
 
 export interface MonthSummary {
@@ -19,6 +21,7 @@ export interface MonthSummary {
   committedPercentage: number;
   expensesByType: any[];
   incomeByType: any[];
+  expensesByCategory: any[];
 }
 
 export interface AnnualSummary {
@@ -32,6 +35,7 @@ export interface AnnualSummary {
     worstMonth: number | null;  // mês com maior gasto
   };
   expensesByType: { type: string; value: number }[];
+  expensesByCategory: { categoryId: string; categoryName: string; value: number; color: string }[];
   topExpenseMonth: number | null;
 }
 
@@ -42,16 +46,19 @@ export class SummaryService {
   private readonly sumPendingStrategy = new FilteredSumStrategy('status', 'PENDING');
   private readonly committedStrategy = new CommittedPercentageStrategy();
   private readonly groupByTypeStrategy = new GroupByTypeStrategy();
+  private readonly groupByCategoryStrategy = new GroupByCategoryStrategy();
 
   constructor(
     private readonly billingsService: BillingsService,
     private readonly expensesService: ExpensesService,
+    private readonly categoriesService: CategoriesService,
   ) {}
 
   async forMonth(userId: string, year: number, month: number): Promise<MonthSummary> {
-    const [billings, expenses] = await Promise.all([
+    const [billings, expenses, categories] = await Promise.all([
       this.billingsService.listForMonth(userId, year, month),
       this.expensesService.listForMonth(userId, year, month),
+      this.categoriesService.list(userId),
     ]);
 
     const totalIncome = this.sumStrategy.calculate(billings);
@@ -72,6 +79,7 @@ export class SummaryService {
       committedPercentage,
       expensesByType: this.groupByTypeStrategy.calculate(expenses),
       incomeByType: this.groupByTypeStrategy.calculate(billings),
+      expensesByCategory: this.groupByCategoryStrategy.calculate(expenses, categories),
     };
   }
 
@@ -104,11 +112,32 @@ export class SummaryService {
       .map(([type, value]) => ({ type, value: Number(value.toFixed(2)) }))
       .sort((a, b) => b.value - a.value);
 
+    const categoryMap = new Map<string, { categoryName: string; value: number; color: string }>();
+    for (const m of months) {
+      for (const bucket of m.expensesByCategory) {
+        const existing = categoryMap.get(bucket.categoryId);
+        categoryMap.set(bucket.categoryId, {
+          categoryName: bucket.categoryName,
+          color: existing?.color ?? bucket.color,
+          value: (existing?.value ?? 0) + Number(bucket.value),
+        });
+      }
+    }
+    const expensesByCategory = Array.from(categoryMap.entries())
+      .map(([categoryId, v]) => ({
+        categoryId,
+        categoryName: v.categoryName,
+        color: v.color,
+        value: Number(v.value.toFixed(2)),
+      }))
+      .sort((a, b) => b.value - a.value);
+
     return {
       year,
       months,
       totals: { totalIncome, totalExpenses, balance, bestMonth, worstMonth },
       expensesByType,
+      expensesByCategory,
       topExpenseMonth: worstMonth,
     };
   }
