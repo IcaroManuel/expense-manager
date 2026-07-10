@@ -46,6 +46,8 @@ model Billing {
   value         Decimal     @db.Decimal(10, 2)
   description   String?
   recurring     Boolean     @default(false)
+  startYear     Int?
+  startMonth    Int?
   year          Int?
   month         Int?
   monthCreated  Int?

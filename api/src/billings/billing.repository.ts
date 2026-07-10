@@ -13,8 +13,14 @@ export class BillingRepository implements IBillingRepository {
         { recurring: false, year, month },
         {
           recurring: true,
-          year: null,
-          month: null,
+          AND: [
+            {
+              OR: [
+                { startYear: { lt: year } },
+                { startYear: year, startMonth: { lte: month } },
+              ],
+            },
+          ],
         },
       ],
     };

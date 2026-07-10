@@ -3,16 +3,41 @@ import axios from "axios";
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3333";
 export const API = `${BACKEND_URL}/api`;
 
+const TOKEN_STORAGE_KEY = "session_token";
+
+// Fallback para quando o navegador bloqueia cookies cross-site (Safari ITP,
+// Firefox Strict Tracking Protection, Brave, etc.). O cookie httpOnly continua
+// sendo a via principal; o header Authorization garante a sessão mesmo quando
+// o cookie é descartado silenciosamente pelo navegador.
+export const getStoredToken = () =>
+  typeof window !== "undefined" ? window.localStorage.getItem(TOKEN_STORAGE_KEY) : null;
+
+export const setStoredToken = (token: string | null) => {
+  if (typeof window === "undefined") return;
+  if (token) window.localStorage.setItem(TOKEN_STORAGE_KEY, token);
+  else window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+};
+
 export const api = axios.create({
   baseURL: API,
   headers: { "Content-Type": "application/json" },
   withCredentials: true,
 });
 
+api.interceptors.request.use((config) => {
+  const token = getStoredToken();
+  if (token) {
+    config.headers = config.headers ?? {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 api.interceptors.response.use(
   (resp) => resp,
   (err) => {
     if (err?.response?.status === 401) {
+      setStoredToken(null);
       // Verifica se estamos no cliente para evitar erros de SSR no Next.js
       if (typeof window !== "undefined") {
         const here = window.location.pathname;
@@ -31,15 +56,28 @@ api.interceptors.response.use(
 
 export const fetchMe = () => api.get("/auth/me").then((r) => r.data);
 export const loginApi = (email: string, password: string) =>
-  api.post("/auth/login", { email, password }).then((r) => r.data);
+  api.post("/auth/login", { email, password }).then((r) => {
+    setStoredToken(r.data?.token ?? null);
+    return r.data;
+  });
 
 export const registerApi = (email: string, name: string, password: string) =>
-  api.post("/auth/register", { email, name, password }).then((r) => r.data);
+  api.post("/auth/register", { email, name, password }).then((r) => {
+    setStoredToken(r.data?.token ?? null);
+    return r.data;
+  });
 
 export const setInitialPasswordApi = (email: string, name: string, password: string) =>
-  api.post("/auth/set-initial-password", { email, name, password }).then((r) => r.data);
+  api.post("/auth/set-initial-password", { email, name, password }).then((r) => {
+    setStoredToken(r.data?.token ?? null);
+    return r.data;
+  });
 
-export const logoutApi = () => api.post("/auth/logout").then((r) => r.data);
+export const logoutApi = () =>
+  api.post("/auth/logout").then((r) => {
+    setStoredToken(null);
+    return r.data;
+  });
 
 export const exchangeSession = (sessionId: string) =>
   api.post("/auth/session", { session_id: sessionId }).then((r) => r.data);

@@ -52,7 +52,7 @@ export class AuthController {
       email: user.email,
       name: user.name,
       picture: user.picture,
-      password: user.password,
+      token,
     };
   }
 
@@ -82,7 +82,7 @@ export class AuthController {
       email: user.email,
       name: user.name,
       picture: user.picture,
-      password: user.password,
+      token,
     };
   }
 
@@ -114,7 +114,7 @@ export class AuthController {
       email: user.email,
       name: user.name,
       picture: user.picture,
-      password: user.password,
+      token,
     };
   }
 

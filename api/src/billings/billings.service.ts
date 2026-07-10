@@ -115,6 +115,8 @@ export class BillingsService {
       value: payload.value,
       description: payload.description,
       recurring: isRecurring,
+      startYear: isRecurring ? payload.year : null,
+      startMonth: isRecurring ? payload.month : null,
       year: isRecurring ? null : payload.year,
       month: isRecurring ? null : payload.month,
       yearCreated,
