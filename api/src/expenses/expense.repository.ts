@@ -10,9 +10,13 @@ export class ExpenseRepository implements IExpenseRepository {
     return {
       userId,
       OR: [
-        { recurring: false, year, month },
+        // Cobre despesas avulsas e as novas despesas recorrentes (uma linha por mês).
+        { year, month },
         {
+          // Compatibilidade com despesas recorrentes antigas (um único registro
+          // cobrindo um intervalo de meses via startYear/startMonth/endYear/endMonth).
           recurring: true,
+          year: null,
           AND: [
             {
               OR: [
@@ -35,6 +39,16 @@ export class ExpenseRepository implements IExpenseRepository {
 
   async insert(expense: any): Promise<void> {
     await this.prisma.expense.create({ data: expense });
+  }
+
+  async insertMany(expenses: any[]): Promise<void> {
+    await this.prisma.expense.createMany({ data: expenses });
+  }
+
+  async deleteByGroup(userId: string, recurrenceGroupId: string): Promise<void> {
+    await this.prisma.expense.deleteMany({
+      where: { userId, recurrenceGroupId },
+    });
   }
 
   async findById(userId: string, expenseId: string): Promise<any> {

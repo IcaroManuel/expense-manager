@@ -13,6 +13,7 @@ export interface Expense {
   value: number | string;
   status: ExpenseStatus;
   color?: string;
+  date?: string | null;
   recurring?: boolean;
   endYear?: number | null;
   endMonth?: number | null;

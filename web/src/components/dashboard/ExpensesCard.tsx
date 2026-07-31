@@ -49,6 +49,7 @@ interface ExpenseFormState {
   value: string;
   status: ExpenseStatus;
   color: string;
+  date: string;
   hasEndDate: boolean;
   endYear: string;
   endYearMode: "preset" | "custom";
@@ -62,6 +63,7 @@ const EMPTY: ExpenseFormState = {
   value: "",
   status: "PENDING",
   color: DEFAULT_COLOR,
+  date: "",
   hasEndDate: false,
   endYear: "",
   endYearMode: "preset",
@@ -129,6 +131,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged, categor
       value: String(expense.value),
       status: expense.status,
       color: expense.color || DEFAULT_COLOR,
+      date: expense.date ? expense.date.slice(0, 10) : "",
       hasEndDate: !!(expense.endYear && expense.endMonth),
       endYear: expense.endYear ? String(expense.endYear) : "",
       endYearMode: "preset",
@@ -167,6 +170,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged, categor
             value,
             status: form.status,
             color: form.color,
+            date: form.date || null,
             endYear,
             endMonth,
           },
@@ -180,6 +184,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged, categor
           value,
           status: form.status,
           color: form.color,
+          date: form.date || null,
           year,
           month,
           endYear,
@@ -397,6 +402,20 @@ export default function ExpensesCard({ expenses, year, month, onChanged, categor
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="expense-date">Data de pagamento (opcional)</Label>
+              <Input
+                id="expense-date"
+                type="date"
+                data-testid={MODAL.expenseDate}
+                value={form.date}
+                onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+              />
+              <p className="text-xs text-[#9A9892] dark:text-[#707070]">
+                Se definida, a despesa aparecerá no mês correspondente à data, e não no mês atual.
+              </p>
             </div>
 
             <div className="space-y-2">

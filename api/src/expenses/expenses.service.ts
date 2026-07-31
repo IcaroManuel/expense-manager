@@ -12,6 +12,7 @@ export interface ExpenseCreate {
   value: number;
   year: number;
   month: number;
+  date?: string | null;
   endYear?: number | null;
   endMonth?: number | null;
 }
@@ -20,6 +21,7 @@ export interface ExpenseUpdate {
   value?: number;
   status?: string;
   color?: string;
+  date?: string | null;
   endYear?: number | null;
   endMonth?: number | null;
 }
@@ -28,12 +30,15 @@ export const EXPENSE_REPOSITORY = 'EXPENSE_REPOSITORY';
 export interface IExpenseRepository {
   listForMonth(userId: string, year: number, month: number): Promise<any[]>;
   insert(expense: any): Promise<void>;
+  insertMany(expenses: any[]): Promise<void>;
   updateFields(userId: string, expenseId: string, fields: any): Promise<any>;
   findById(userId: string, expenseId: string): Promise<any>;
   delete(userId: string, expenseId: string): Promise<void>;
+  deleteByGroup(userId: string, recurrenceGroupId: string): Promise<void>;
 }
 
 const PENDING_STATUS = 'PENDING';
+const MAX_RECURRENCE_MONTHS = 360;
 
 @Injectable()
 export class ExpensesService {
@@ -54,7 +59,9 @@ export class ExpensesService {
       value: doc.value,
       status: doc.status || PENDING_STATUS,
       color: doc.color || '#820AD1',
+      date: doc.date ?? null,
       recurring: doc.recurring || false,
+      recurrenceGroupId: doc.recurrenceGroupId ?? null,
       endYear: doc.endYear ?? null,
       endMonth: doc.endMonth ?? null,
       year,
@@ -98,38 +105,77 @@ export class ExpensesService {
     const yearCreated = now.getFullYear();
     const monthCreated = now.getMonth() + 1;
 
-    if (isRecurring && payload.endYear != null && payload.endMonth != null) {
-      const endIndex = payload.endYear * 12 + payload.endMonth;
-      const startIndex = payload.year * 12 + payload.month;
-      if (endIndex < startIndex) {
-        throw new BadRequestException(
-          'A data de término não pode ser anterior ao mês inicial.',
-        );
-      }
-    }
+    const date = payload.date ? new Date(payload.date) : null;
+    const effectiveYear = date ? date.getUTCFullYear() : payload.year;
+    const effectiveMonth = date ? date.getUTCMonth() + 1 : payload.month;
 
-    const expense = {
-      id: crypto.randomUUID(),
+    const baseFields = {
       userId,
       categoryId: payload.categoryId,
       value: payload.value,
       status: payload.status,
       color: payload.color || '#820AD1',
-      recurring: isRecurring,
-      startYear: isRecurring ? payload.year : null,
-      startMonth: isRecurring ? payload.month : null,
-      endYear: isRecurring ? payload.endYear : null,
-      endMonth: isRecurring ? payload.endMonth : null,
-      year: isRecurring ? null : payload.year,
-      month: isRecurring ? null : payload.month,
+      date,
       yearCreated,
       monthCreated,
     };
 
-    await this.repo.insert(expense);
-    this.hub.publish({ name: 'expense.created', payload: expense });
+    if (!isRecurring) {
+      const expense = {
+        id: crypto.randomUUID(),
+        ...baseFields,
+        recurring: false,
+        recurrenceGroupId: null,
+        startYear: null,
+        startMonth: null,
+        endYear: null,
+        endMonth: null,
+        year: effectiveYear,
+        month: effectiveMonth,
+      };
 
-    return this.materializeExpense(expense, payload.year, payload.month);
+      await this.repo.insert(expense);
+      this.hub.publish({ name: 'expense.created', payload: expense });
+
+      return this.materializeExpense(expense, effectiveYear, effectiveMonth);
+    }
+
+    const startIndex = effectiveYear * 12 + effectiveMonth;
+    const endIndex = payload.endYear! * 12 + payload.endMonth!;
+    if (endIndex < startIndex) {
+      throw new BadRequestException(
+        'A data de término não pode ser anterior ao mês inicial.',
+      );
+    }
+    if (endIndex - startIndex + 1 > MAX_RECURRENCE_MONTHS) {
+      throw new BadRequestException(
+        'O período de recorrência é muito longo.',
+      );
+    }
+
+    const recurrenceGroupId = crypto.randomUUID();
+    const expenses: any[] = [];
+    for (let idx = startIndex; idx <= endIndex; idx++) {
+      const y = Math.floor((idx - 1) / 12);
+      const m = idx - y * 12;
+      expenses.push({
+        id: crypto.randomUUID(),
+        ...baseFields,
+        recurring: true,
+        recurrenceGroupId,
+        startYear: effectiveYear,
+        startMonth: effectiveMonth,
+        endYear: payload.endYear,
+        endMonth: payload.endMonth,
+        year: y,
+        month: m,
+      });
+    }
+
+    await this.repo.insertMany(expenses);
+    this.hub.publish({ name: 'expense.created', payload: expenses[0] });
+
+    return this.materializeExpense(expenses[0], effectiveYear, effectiveMonth);
   }
 
   async update(
@@ -153,6 +199,7 @@ export class ExpensesService {
     if (payload.value !== undefined) fields.value = payload.value;
     if (payload.status !== undefined) fields.status = payload.status;
     if (payload.color !== undefined) fields.color = payload.color;
+    if (payload.date !== undefined) fields.date = payload.date ? new Date(payload.date) : null;
     if (payload.endYear !== undefined) fields.endYear = payload.endYear;
     if (payload.endMonth !== undefined) fields.endMonth = payload.endMonth;
 
@@ -172,7 +219,8 @@ export class ExpensesService {
     const doc = await this.repo.findById(userId, expenseId);
     if (!doc) return false;
 
-    if (doc.recurring) {
+    if (doc.recurring && doc.year == null) {
+      // Linha legada: um único registro cobrindo um intervalo de meses.
       await this.skips.addSkip(userId, 'expense', expenseId, year, month);
     } else {
       await this.repo.delete(userId, expenseId);
@@ -189,8 +237,12 @@ export class ExpensesService {
     const doc = await this.repo.findById(userId, expenseId);
     if (!doc) return false;
 
-    await this.repo.delete(userId, expenseId);
-    await this.skips.deleteAllForEntity(userId, 'expense', expenseId);
+    if (doc.recurrenceGroupId) {
+      await this.repo.deleteByGroup(userId, doc.recurrenceGroupId);
+    } else {
+      await this.repo.delete(userId, expenseId);
+      await this.skips.deleteAllForEntity(userId, 'expense', expenseId);
+    }
 
     this.hub.publish({
       name: 'expense.template_deleted',

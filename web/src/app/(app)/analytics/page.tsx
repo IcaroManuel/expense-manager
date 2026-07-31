@@ -8,7 +8,7 @@ import {
 import { TrendingDown, TrendingUp, Award, AlertTriangle, Loader2 } from "lucide-react";
 import { fetchAnnualSummary } from "@/lib/api";
 import {
-  formatBRL, MONTH_SHORT_PT, MONTHS_PT,
+  formatBRL, MONTH_SHORT_PT, MONTHS_PT, INCOME_COLOR_PALETTE,
 } from "@/lib/format";
 import { useTheme } from "@/lib/theme-context";
 
@@ -213,39 +213,88 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          {/* O que mais pesou no ano */}
-          <div className="bg-white dark:bg-[#1a1a1a] border border-[#EAE7E1] dark:border-[#333] rounded-2xl p-4 sm:p-6 transition-colors">
-            <div className="mb-6">
-              <div className="text-eyebrow dark:text-[#a0a0a0]">Composição</div>
-              <h2 className="font-display text-xl font-semibold tracking-tight mt-1 dark:text-white">
-                O que mais pesou no ano
-              </h2>
-            </div>
-            <div className="space-y-3">
-              {(data.expensesByCategory ?? []).map((bucket: any) => {
-                const total = data.totals.totalExpenses;
-                const pct = total > 0 ? (bucket.value / total) * 100 : 0;
-                const color = bucket.color ?? "#9A9892";
-                return (
-                  <div key={bucket.categoryId} className="flex items-center gap-4">
-                    <div className="w-28 sm:w-36 text-xs sm:text-sm font-medium text-[#1C1C19] dark:text-white shrink-0">
-                      {bucket.categoryName ?? bucket.categoryId}
+          {/* Composição: gastos e entradas por categoria */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* O que mais pesou no ano */}
+            <div className="bg-white dark:bg-[#1a1a1a] border border-[#EAE7E1] dark:border-[#333] rounded-2xl p-4 sm:p-6 transition-colors">
+              <div className="mb-6">
+                <div className="text-eyebrow dark:text-[#a0a0a0]">Composição</div>
+                <h2 className="font-display text-xl font-semibold tracking-tight mt-1 dark:text-white">
+                  O que mais pesou no ano
+                </h2>
+              </div>
+              <div className="space-y-3">
+                {(data.expensesByCategory ?? []).map((bucket: any) => {
+                  const total = data.totals.totalExpenses;
+                  const pct = total > 0 ? (bucket.value / total) * 100 : 0;
+                  const color = bucket.color ?? "#9A9892";
+                  return (
+                    <div key={bucket.categoryId} className="flex items-center gap-4">
+                      <div className="w-28 sm:w-36 text-xs sm:text-sm font-medium text-[#1C1C19] dark:text-white shrink-0">
+                        {bucket.categoryName ?? bucket.categoryId}
+                      </div>
+                      <div className="flex-1 h-2.5 rounded-full bg-[#EAE7E1] dark:bg-[#333] overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-700"
+                          style={{ width: `${pct}%`, background: color }}
+                        />
+                      </div>
+                      <div className="text-xs sm:text-sm tabular-nums font-semibold text-[#1C1C19] dark:text-white w-24 sm:w-28 text-right shrink-0">
+                        {formatBRL(bucket.value)}
+                      </div>
+                      <div className="text-xs text-[#9A9892] dark:text-[#707070] w-10 text-right shrink-0">
+                        {pct.toFixed(1)}%
+                      </div>
                     </div>
-                    <div className="flex-1 h-2.5 rounded-full bg-[#EAE7E1] dark:bg-[#333] overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-700"
-                        style={{ width: `${pct}%`, background: color }}
-                      />
-                    </div>
-                    <div className="text-xs sm:text-sm tabular-nums font-semibold text-[#1C1C19] dark:text-white w-24 sm:w-28 text-right shrink-0">
-                      {formatBRL(bucket.value)}
-                    </div>
-                    <div className="text-xs text-[#9A9892] dark:text-[#707070] w-10 text-right shrink-0">
-                      {pct.toFixed(1)}%
-                    </div>
+                  );
+                })}
+                {(data.expensesByCategory ?? []).length === 0 && (
+                  <div className="text-sm text-[#9A9892] dark:text-[#707070] py-6 text-center">
+                    Nenhuma saída registrada em {year}.
                   </div>
-                );
-              })}
+                )}
+              </div>
+            </div>
+
+            {/* De onde vieram as entradas */}
+            <div className="bg-white dark:bg-[#1a1a1a] border border-[#EAE7E1] dark:border-[#333] rounded-2xl p-4 sm:p-6 transition-colors">
+              <div className="mb-6">
+                <div className="text-eyebrow dark:text-[#a0a0a0]">Composição</div>
+                <h2 className="font-display text-xl font-semibold tracking-tight mt-1 dark:text-white">
+                  De onde vieram as entradas
+                </h2>
+              </div>
+              <div className="space-y-3">
+                {(data.incomeByCategory ?? []).map((bucket: any, i: number) => {
+                  const total = data.totals.totalIncome;
+                  const pct = total > 0 ? (bucket.value / total) * 100 : 0;
+                  const color = INCOME_COLOR_PALETTE[i % INCOME_COLOR_PALETTE.length];
+                  return (
+                    <div key={bucket.categoryId} className="flex items-center gap-4">
+                      <div className="w-28 sm:w-36 text-xs sm:text-sm font-medium text-[#1C1C19] dark:text-white shrink-0">
+                        {bucket.categoryName ?? bucket.categoryId}
+                      </div>
+                      <div className="flex-1 h-2.5 rounded-full bg-[#EAE7E1] dark:bg-[#333] overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-700"
+                          style={{ width: `${pct}%`, background: color }}
+                        />
+                      </div>
+                      <div className="text-xs sm:text-sm tabular-nums font-semibold text-[#1C1C19] dark:text-white w-24 sm:w-28 text-right shrink-0">
+                        {formatBRL(bucket.value)}
+                      </div>
+                      <div className="text-xs text-[#9A9892] dark:text-[#707070] w-10 text-right shrink-0">
+                        {pct.toFixed(1)}%
+                      </div>
+                    </div>
+                  );
+                })}
+                {(data.incomeByCategory ?? []).length === 0 && (
+                  <div className="text-sm text-[#9A9892] dark:text-[#707070] py-6 text-center">
+                    Nenhuma entrada registrada em {year}.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </>

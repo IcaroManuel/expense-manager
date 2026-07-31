@@ -36,6 +36,7 @@ export const MODAL = {
   expenseType: "expense-type-select",
   expenseValue: "expense-value-input",
   expenseStatus: "expense-status-select",
+  expenseDate: "expense-date-input",
   expenseSubmit: "expense-submit-btn",
   expenseCancel: "expense-cancel-btn",
 } as const;

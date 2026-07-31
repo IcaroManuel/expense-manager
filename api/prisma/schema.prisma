@@ -69,7 +69,9 @@ model Expense {
   status        ExpenseStatus
   value         Decimal       @db.Decimal(10, 2)
   color         String        @default("#820AD1")
+  date          DateTime?
   recurring     Boolean       @default(false)
+  recurrenceGroupId String?
   startYear     Int?
   startMonth    Int?
   endYear       Int?

@@ -50,6 +50,18 @@ export const EXPENSE_COLOR_PALETTE = [
   { value: "#9A9892", label: "Cinza" },
 ] as const;
 
+export const INCOME_COLOR_PALETTE = [
+  "#4A6B4A",
+  "#8FBF8A",
+  "#2D4238",
+  "#3B82F6",
+  "#06B6D4",
+  "#F59E0B",
+  "#EC4899",
+  "#820AD1",
+  "#9A9892",
+] as const;
+
 export const monthYearLabel = (year: number, month: number): string =>
   `${MONTH_SHORT_PT[month - 1]}/${year}`;
 

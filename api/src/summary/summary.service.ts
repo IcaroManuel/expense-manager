@@ -22,6 +22,7 @@ export interface MonthSummary {
   expensesByType: any[];
   incomeByType: any[];
   expensesByCategory: any[];
+  incomeByCategory: any[];
 }
 
 export interface AnnualSummary {
@@ -36,6 +37,7 @@ export interface AnnualSummary {
   };
   expensesByType: { type: string; value: number }[];
   expensesByCategory: { categoryId: string; categoryName: string; value: number; color: string }[];
+  incomeByCategory: { categoryId: string; categoryName: string; value: number; color: string }[];
   topExpenseMonth: number | null;
 }
 
@@ -80,6 +82,7 @@ export class SummaryService {
       expensesByType: this.groupByTypeStrategy.calculate(expenses),
       incomeByType: this.groupByTypeStrategy.calculate(billings),
       expensesByCategory: this.groupByCategoryStrategy.calculate(expenses, categories),
+      incomeByCategory: this.groupByCategoryStrategy.calculate(billings, categories),
     };
   }
 
@@ -132,12 +135,33 @@ export class SummaryService {
       }))
       .sort((a, b) => b.value - a.value);
 
+    const incomeCategoryMap = new Map<string, { categoryName: string; value: number; color: string }>();
+    for (const m of months) {
+      for (const bucket of m.incomeByCategory) {
+        const existing = incomeCategoryMap.get(bucket.categoryId);
+        incomeCategoryMap.set(bucket.categoryId, {
+          categoryName: bucket.categoryName,
+          color: existing?.color ?? bucket.color,
+          value: (existing?.value ?? 0) + Number(bucket.value),
+        });
+      }
+    }
+    const incomeByCategory = Array.from(incomeCategoryMap.entries())
+      .map(([categoryId, v]) => ({
+        categoryId,
+        categoryName: v.categoryName,
+        color: v.color,
+        value: Number(v.value.toFixed(2)),
+      }))
+      .sort((a, b) => b.value - a.value);
+
     return {
       year,
       months,
       totals: { totalIncome, totalExpenses, balance, bestMonth, worstMonth },
       expensesByType,
       expensesByCategory,
+      incomeByCategory,
       topExpenseMonth: worstMonth,
     };
   }
