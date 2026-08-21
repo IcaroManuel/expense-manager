@@ -6,8 +6,6 @@ import helmet from 'helmet';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: false });
 
-  // Necessário para o cookie "secure" funcionar corretamente atrás
-  // do proxy/load balancer do Render (senão Express acha que a conexão não é HTTPS)
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
 
   app.use(helmet());

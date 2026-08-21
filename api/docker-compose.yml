@@ -1,17 +1,11 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: finance-postgres
-    environment:
-      POSTGRES_USER: finance_user
-      POSTGRES_PASSWORD: finance_password
-      POSTGRES_DB: finance_db
+  api:
+    build: .
+    container_name: expense-manager-api
+    restart: unless-stopped
+    env_file:
+      - .env
     ports:
-      - '5432:5432'
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_data:
+      - '3333:3333'
