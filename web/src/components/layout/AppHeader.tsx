@@ -27,7 +27,7 @@ export default function AppHeader() {
               <Wallet size={18} />
             </div>
             <div>
-              <div className="text-eyebrow leading-none">Gestor Financeiro</div>
+              <div className="text-eyebrow leading-none">Dividão</div>
               <div className="font-display text-base font-semibold leading-tight dark:text-white">
                 {"Painel mensal"}
               </div>

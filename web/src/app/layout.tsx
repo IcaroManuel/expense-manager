@@ -22,8 +22,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Gestor Financeiro",
-  description: "A product of emergent.sh",
+  title: "Dividão",
+  description: "A product of icarofeernandes.dev",
   themeColor: "#000000",
   viewport: "width=device-width, initial-scale=1",
 };

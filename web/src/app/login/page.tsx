@@ -71,7 +71,7 @@ export default function Login() {
           </div>
           <div>
             <div className="text-[10px] uppercase tracking-[0.2em] font-medium text-[#6B6A65] dark:text-[#a0a0a0]">
-              Gestor Financeiro
+              Dividão
             </div>
             <div className="font-display text-base font-semibold leading-tight text-[#1C1C19] dark:text-white">
               Painel pessoal
