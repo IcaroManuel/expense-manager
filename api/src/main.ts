@@ -22,40 +22,11 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
-  import { NestFactory } from '@nestjs/core';
-  import { AppModule } from './app.module';
-  import cookieParser from 'cookie-parser';
-  import helmet from 'helmet';
+  const httpAdapter = app.getHttpAdapter();
+  httpAdapter.get('/', (req, res) => {
+    res.send({ message: 'Dividão API' });
+  });
 
-  async function bootstrap() {
-    const app = await NestFactory.create(AppModule, { cors: false });
-
-    app.getHttpAdapter().getInstance().set('trust proxy', 1);
-
-    app.use(helmet());
-
-    const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000')
-      .split(',')
-      .map((o) => o.trim());
-
-    app.enableCors({
-      origin: allowedOrigins,
-      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      credentials: true,
-    });
-
-    app.use(cookieParser());
-
-    const httpAdapter = app.getHttpAdapter();
-    httpAdapter.get('/', (req, res) => {
-      res.send({ message: 'Dividão API' });
-    });
-
-    const port = process.env.PORT || 3333;
-    await app.listen(port);
-    console.log(`🚀 Application is running on: http://localhost:${port}`);
-  }
-  bootstrap();
   const port = process.env.PORT || 3333;
   await app.listen(port);
   console.log(`🚀 Application is running on: http://localhost:${port}`);
