@@ -62,7 +62,7 @@ export default function SpendingChart({ summary }: SpendingChartProps) {
   return (
     <div
       data-testid={DASHBOARD.chart}
-      className="bg-white dark:bg-[#1a1a1a] border border-[#EAE7E1] dark:border-[#333] rounded-2xl p-4 sm:p-6 flex flex-col transition-colors"
+      className="bg-white dark:bg-[#1a1a1a] border border-[#EAE7E1] dark:border-[#333] rounded-2xl min-w-0 p-4 sm:p-6 flex flex-col transition-colors"
     >
       <div className="mb-4">
         <div className="text-eyebrow dark:text-[#a0a0a0]">Análise</div>
@@ -121,7 +121,7 @@ export default function SpendingChart({ summary }: SpendingChartProps) {
                     <div className="w-2 h-2 rounded-full bg-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
                       <span className="text-xs font-medium text-[#1C1C19] dark:text-white truncate">
                         {d.name}
                       </span>

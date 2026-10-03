@@ -61,20 +61,18 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex items-end justify-between gap-3 sm:gap-4">
         <div>
           <p className="text-[10px] uppercase tracking-widest text-[#9A9892] dark:text-[#707070] font-medium">Análise</p>
           <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight mt-1 dark:text-white">
             Visão anual
           </h1>
-          <p className="text-[#6B6A65] dark:text-[#a0a0a0] text-sm mt-1">
-            Seus dados financeiros do ano completo, mês a mês.
-          </p>
         </div>
 
-        <div className="flex items-center gap-2 bg-white dark:bg-[#1a1a1a] border border-[#EAE7E1] dark:border-[#333] rounded-2xl px-4 py-2.5 self-start">
-          <span className="text-sm text-[#6B6A65] dark:text-[#a0a0a0]">Ano:</span>
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2 bg-white dark:bg-[#1a1a1a] border border-[#EAE7E1] dark:border-[#333] rounded-2xl px-2 sm:px-4 py-2.5">
+          <label htmlFor="analytics-year" className="sr-only sm:not-sr-only text-sm text-[#6B6A65] dark:text-[#a0a0a0]">Ano:</label>
           <select
+            id="analytics-year"
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}
             className="font-display font-semibold text-sm bg-transparent outline-none cursor-pointer text-[#1C1C19] dark:text-white"
@@ -98,7 +96,7 @@ export default function AnalyticsPage() {
       ) : (
         <>
           {/* Cards de destaque */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 min-[400px]:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
             {[
               {
                 label: "Total de entradas",
@@ -229,20 +227,20 @@ export default function AnalyticsPage() {
                   const pct = total > 0 ? (bucket.value / total) * 100 : 0;
                   const color = bucket.color ?? "#9A9892";
                   return (
-                    <div key={bucket.categoryId} className="flex items-center gap-4">
-                      <div className="w-28 sm:w-36 text-xs sm:text-sm font-medium text-[#1C1C19] dark:text-white shrink-0">
+                    <div key={bucket.categoryId} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 sm:flex sm:gap-4">
+                      <div className="min-w-0 break-words sm:w-36 text-xs sm:text-sm font-medium text-[#1C1C19] dark:text-white shrink-0">
                         {bucket.categoryName ?? bucket.categoryId}
                       </div>
-                      <div className="flex-1 h-2.5 rounded-full bg-[#EAE7E1] dark:bg-[#333] overflow-hidden">
+                      <div className="col-start-1 row-start-2 min-w-0 sm:flex-1 h-2.5 rounded-full bg-[#EAE7E1] dark:bg-[#333] overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all duration-700"
                           style={{ width: `${pct}%`, background: color }}
                         />
                       </div>
-                      <div className="text-xs sm:text-sm tabular-nums font-semibold text-[#1C1C19] dark:text-white w-24 sm:w-28 text-right shrink-0">
+                      <div className="text-xs sm:text-sm tabular-nums font-semibold text-[#1C1C19] dark:text-white sm:w-28 text-right shrink-0">
                         {formatBRL(bucket.value)}
                       </div>
-                      <div className="text-xs text-[#9A9892] dark:text-[#707070] w-10 text-right shrink-0">
+                      <div className="text-xs text-[#9A9892] dark:text-[#707070] col-start-2 row-start-2 sm:w-10 text-right shrink-0">
                         {pct.toFixed(1)}%
                       </div>
                     </div>
@@ -270,20 +268,20 @@ export default function AnalyticsPage() {
                   const pct = total > 0 ? (bucket.value / total) * 100 : 0;
                   const color = INCOME_COLOR_PALETTE[i % INCOME_COLOR_PALETTE.length];
                   return (
-                    <div key={bucket.categoryId} className="flex items-center gap-4">
-                      <div className="w-28 sm:w-36 text-xs sm:text-sm font-medium text-[#1C1C19] dark:text-white shrink-0">
+                    <div key={bucket.categoryId} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 sm:flex sm:gap-4">
+                      <div className="min-w-0 break-words sm:w-36 text-xs sm:text-sm font-medium text-[#1C1C19] dark:text-white shrink-0">
                         {bucket.categoryName ?? bucket.categoryId}
                       </div>
-                      <div className="flex-1 h-2.5 rounded-full bg-[#EAE7E1] dark:bg-[#333] overflow-hidden">
+                      <div className="col-start-1 row-start-2 min-w-0 sm:flex-1 h-2.5 rounded-full bg-[#EAE7E1] dark:bg-[#333] overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all duration-700"
                           style={{ width: `${pct}%`, background: color }}
                         />
                       </div>
-                      <div className="text-xs sm:text-sm tabular-nums font-semibold text-[#1C1C19] dark:text-white w-24 sm:w-28 text-right shrink-0">
+                      <div className="text-xs sm:text-sm tabular-nums font-semibold text-[#1C1C19] dark:text-white sm:w-28 text-right shrink-0">
                         {formatBRL(bucket.value)}
                       </div>
-                      <div className="text-xs text-[#9A9892] dark:text-[#707070] w-10 text-right shrink-0">
+                      <div className="text-xs text-[#9A9892] dark:text-[#707070] col-start-2 row-start-2 sm:w-10 text-right shrink-0">
                         {pct.toFixed(1)}%
                       </div>
                     </div>

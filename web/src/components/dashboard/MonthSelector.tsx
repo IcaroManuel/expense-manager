@@ -107,7 +107,7 @@ export default function MonthSelector({
   };
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex w-full sm:w-auto flex-col items-center gap-2">
       <div className="flex items-center gap-2 sm:gap-3">
         <button
           data-testid={DASHBOARD.monthPrev}
@@ -120,7 +120,7 @@ export default function MonthSelector({
         </button>
 
         {/* Centro com os dois dropdowns */}
-        <div className="flex flex-col items-center gap-0.5 min-w-[180px]">
+        <div className="flex flex-col items-center gap-0.5 min-w-[160px] sm:min-w-[180px]">
           <div className="text-[10px] uppercase tracking-widest text-[#9A9892] dark:text-[#707070] font-medium">
             Mês de referência
           </div>

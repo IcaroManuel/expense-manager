@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Manrope, IBM_Plex_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
@@ -24,8 +24,12 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Dividão",
   description: "A product of icarofeernandes.dev",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
   themeColor: "#000000",
-  viewport: "width=device-width, initial-scale=1",
 };
 
 export default function RootLayout({
@@ -35,7 +39,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="pt-BR"
       className={cn(
         "h-full antialiased",
         manrope.variable,

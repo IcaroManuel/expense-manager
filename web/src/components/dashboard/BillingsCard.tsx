@@ -151,7 +151,7 @@ export default function BillingsCard({
             onClick={() => setOpen(true)}
             className="inline-flex items-center gap-2 bg-[#5a8c5e] dark:bg-[#4a7c4e] text-white hover:bg-[#6b9d6f] dark:hover:bg-[#5a8c5e] rounded-full px-4 sm:px-5 py-2.5 text-sm font-medium transition-colors"
           >
-            <Plus size={16} /> <span className="hidden sm:inline">Adicionar</span>
+            <Plus size={16} /> <span className="sr-only sm:not-sr-only">Adicionar</span>
           </button>
         </div>
 
@@ -165,9 +165,9 @@ export default function BillingsCard({
             <li
               key={b.id}
               data-testid={DASHBOARD.billingItem(b.id)}
-              className="py-3 sm:py-4 flex items-center justify-between animate-fade-up"
+              className="py-3 sm:py-4 flex flex-wrap items-center justify-between gap-2 animate-fade-up"
             >
-              <div className="flex items-center gap-3 min-w-0">
+              <div className="flex flex-1 items-center gap-2 sm:gap-3 min-w-0">
                 <div
                   className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
                   style={{
@@ -185,13 +185,13 @@ export default function BillingsCard({
                   <div className="font-medium text-[#1C1C19] dark:text-white truncate text-sm sm:text-base">
                     {getCategoryName(b.categoryId)}
                   </div>
-                  <div className="text-xs text-[#6B6A65] dark:text-[#707070] uppercase tracking-wider">
+                  <div className="break-words text-xs text-[#6B6A65] dark:text-[#707070] uppercase tracking-wider">
                     {b.recurring ? "Recorrente" : "Avulso"}
                     {b.description ? ` · ${b.description}` : ""}
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex shrink-0 items-center gap-2 sm:gap-3">
                 <div className="font-display font-semibold text-[#1C1C19] dark:text-white text-sm sm:text-base tabular-nums">
                   {formatBRL(Number(b.value))}
                 </div>
@@ -276,7 +276,7 @@ export default function BillingsCard({
                 />
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex shrink-0 items-center gap-2 sm:gap-3">
                 <input
                   type="checkbox"
                   id="billing-recurring"

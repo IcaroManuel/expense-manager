@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
-  Plus, Trash2, MoreHorizontal, CreditCard, Heart, DollarSign, Apple,
+  Plus, Pencil, Trash2, MoreHorizontal, CreditCard, Heart, DollarSign, Apple,
   Home, ShoppingCart, Zap, Tag, Bike, Car,
 } from "lucide-react";
 import {
@@ -29,8 +29,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { fetchCategories, createCategory, deleteCategory } from "@/lib/api";
-import { CATEGORY_TYPE_LABEL } from "@/lib/format";
+import { fetchCategories, createCategory, updateCategory, deleteCategory } from "@/lib/api";
+import { isAxiosError } from "axios";
 
 const AVAILABLE_ICONS = [
   { name: "CreditCard", label: "Cartão", icon: CreditCard },
@@ -58,6 +58,38 @@ export default function CategoriesPage() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: "", type: "EXPENSE" as "INCOME" | "EXPENSE", icon: "Tag" });
   const [submitting, setSubmitting] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [categoryName, setCategoryName] = useState("");
+  const [savingName, setSavingName] = useState(false);
+
+  const startEditing = (category: Category) => {
+    setCategoryName(category.name);
+    setEditingCategory(category);
+  };
+
+  const saveName = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const name = categoryName.trim();
+    if (!editingCategory || savingName) return;
+    if (!name) {
+      toast.error("Digite um nome para a categoria");
+      return;
+    }
+    setSavingName(true);
+    try {
+      await updateCategory(editingCategory.id, { name });
+      setCategories((current) => current.map((category) =>
+        category.id === editingCategory.id ? { ...category, name } : category
+      ));
+      setEditingCategory(null);
+      toast.success("Nome da categoria atualizado");
+    } catch (error) {
+      const message = isAxiosError(error) ? error.response?.data?.message : undefined;
+      toast.error(typeof message === "string" ? message : "Erro ao atualizar categoria");
+    } finally {
+      setSavingName(false);
+    }
+  };
 
   const refresh = async () => {
     setLoading(true);
@@ -117,7 +149,7 @@ export default function CategoriesPage() {
   return (
     <div className="space-y-6">
       <section>
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-start justify-between gap-3 mb-6">
           <div>
             <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight leading-tight dark:text-white">
               Categorias
@@ -128,38 +160,41 @@ export default function CategoriesPage() {
           </div>
           <button
             onClick={() => setOpen(true)}
-            className="inline-flex items-center gap-2 bg-[#820AD1] dark:bg-[#6b008b] text-white hover:bg-[#9629e8] dark:hover:bg-[#820AD1] rounded-full px-4 sm:px-5 py-2.5 text-sm font-medium transition-colors"
+            className="inline-flex shrink-0 items-center gap-2 bg-[#820AD1] dark:bg-[#6b008b] text-white hover:bg-[#9629e8] dark:hover:bg-[#820AD1] rounded-full px-4 sm:px-5 py-2.5 text-sm font-medium transition-colors"
           >
-            <Plus size={16} /> <span className="hidden sm:inline">Adicionar</span>
+            <Plus size={16} /> <span className="sr-only sm:not-sr-only">Adicionar</span>
           </button>
         </div>
 
         {loading ? (
           <div className="text-center py-10 text-[#6B6A65] dark:text-[#707070]">Carregando...</div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-2 gap-3 sm:gap-6">
             {/* Saídas */}
-            <div className="bg-white dark:bg-[#1a1a1a] border border-[#EAE7E1] dark:border-[#333] rounded-2xl p-4 sm:p-6 transition-colors">
-              <h2 className="text-eyebrow dark:text-[#a0a0a0]">Categorias</h2>
-              <h3 className="font-display text-lg font-semibold mt-1 mb-4 dark:text-white">Saídas</h3>
+            <div className="bg-white dark:bg-[#1a1a1a] border border-[#EAE7E1] dark:border-[#333] rounded-2xl min-w-0 p-3 sm:p-6 transition-colors">
+              <h2 className="text-[10px] uppercase tracking-wider font-medium text-[#6B6A65] dark:text-[#a0a0a0]">Categorias</h2>
+              <h3 className="font-display text-base sm:text-lg font-semibold mt-1 mb-3 sm:mb-4 dark:text-white">Saídas</h3>
 
               {expenseCategories.length === 0 ? (
-                <p className="text-sm text-[#9A9892] dark:text-[#707070]">Nenhuma categoria de saída criada.</p>
+                <p className="text-xs sm:text-sm text-[#9A9892] dark:text-[#707070]">Nenhuma categoria de saída criada.</p>
               ) : (
                 <ul className="space-y-2">
                   {expenseCategories.map((cat) => (
                     <li
                       key={cat.id}
-                      className="flex items-center justify-between p-3 bg-[#F9F8F6] dark:bg-[#2a2a2a] rounded-lg border border-[#EAE7E1] dark:border-[#333] transition-colors"
+                      className="flex min-w-0 items-center justify-between gap-1 sm:gap-2 p-2 sm:p-3 bg-[#F9F8F6] dark:bg-[#2a2a2a] rounded-lg border border-[#EAE7E1] dark:border-[#333] transition-colors"
                     >
-                      <span className="text-sm font-medium text-[#1C1C19] dark:text-white">{cat.name}</span>
+                      <span className="min-w-0 break-words text-xs sm:text-sm font-medium text-[#1C1C19] dark:text-white">{cat.name}</span>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="w-8 h-8 rounded-full hover:bg-[#EAE7E1] dark:hover:bg-[#333] flex items-center justify-center text-[#6B6A65] dark:text-[#707070] transition-colors">
+                          <button aria-label={`Opções da categoria ${cat.name}`} className="w-7 h-9 sm:w-8 sm:h-8 shrink-0 rounded-full hover:bg-[#EAE7E1] dark:hover:bg-[#333] flex items-center justify-center text-[#6B6A65] dark:text-[#707070] transition-colors">
                             <MoreHorizontal size={16} />
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="dark:bg-[#1a1a1a] dark:border-[#333]">
+                          <DropdownMenuItem onClick={() => startEditing(cat)} className="min-h-11">
+                            <Pencil size={14} className="mr-2" /> Editar nome
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => onDelete(cat)}
                             className="text-[#B34A3E] dark:text-[#ff8a80] dark:hover:bg-[#2a2a2a]"
@@ -175,27 +210,30 @@ export default function CategoriesPage() {
             </div>
 
             {/* Entradas */}
-            <div className="bg-white dark:bg-[#1a1a1a] border border-[#EAE7E1] dark:border-[#333] rounded-2xl p-4 sm:p-6 transition-colors">
-              <h2 className="text-eyebrow dark:text-[#a0a0a0]">Categorias</h2>
-              <h3 className="font-display text-lg font-semibold mt-1 mb-4 dark:text-white">Entradas</h3>
+            <div className="bg-white dark:bg-[#1a1a1a] border border-[#EAE7E1] dark:border-[#333] rounded-2xl min-w-0 p-3 sm:p-6 transition-colors">
+              <h2 className="text-[10px] uppercase tracking-wider font-medium text-[#6B6A65] dark:text-[#a0a0a0]">Categorias</h2>
+              <h3 className="font-display text-base sm:text-lg font-semibold mt-1 mb-3 sm:mb-4 dark:text-white">Entradas</h3>
 
               {incomeCategories.length === 0 ? (
-                <p className="text-sm text-[#9A9892] dark:text-[#707070]">Nenhuma categoria de entrada criada.</p>
+                <p className="text-xs sm:text-sm text-[#9A9892] dark:text-[#707070]">Nenhuma categoria de entrada criada.</p>
               ) : (
                 <ul className="space-y-2">
                   {incomeCategories.map((cat) => (
                     <li
                       key={cat.id}
-                      className="flex items-center justify-between p-3 bg-[#F9F8F6] dark:bg-[#2a2a2a] rounded-lg border border-[#EAE7E1] dark:border-[#333] transition-colors"
+                      className="flex min-w-0 items-center justify-between gap-1 sm:gap-2 p-2 sm:p-3 bg-[#F9F8F6] dark:bg-[#2a2a2a] rounded-lg border border-[#EAE7E1] dark:border-[#333] transition-colors"
                     >
-                      <span className="text-sm font-medium text-[#1C1C19] dark:text-white">{cat.name}</span>
+                      <span className="min-w-0 break-words text-xs sm:text-sm font-medium text-[#1C1C19] dark:text-white">{cat.name}</span>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="w-8 h-8 rounded-full hover:bg-[#EAE7E1] dark:hover:bg-[#333] flex items-center justify-center text-[#6B6A65] dark:text-[#707070] transition-colors">
+                          <button aria-label={`Opções da categoria ${cat.name}`} className="w-7 h-9 sm:w-8 sm:h-8 shrink-0 rounded-full hover:bg-[#EAE7E1] dark:hover:bg-[#333] flex items-center justify-center text-[#6B6A65] dark:text-[#707070] transition-colors">
                             <MoreHorizontal size={16} />
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="dark:bg-[#1a1a1a] dark:border-[#333]">
+                          <DropdownMenuItem onClick={() => startEditing(cat)} className="min-h-11">
+                            <Pencil size={14} className="mr-2" /> Editar nome
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => onDelete(cat)}
                             className="text-[#B34A3E] dark:text-[#ff8a80] dark:hover:bg-[#2a2a2a]"
@@ -212,6 +250,35 @@ export default function CategoriesPage() {
           </div>
         )}
       </section>
+
+      <Dialog open={editingCategory !== null} onOpenChange={(isOpen) => {
+        if (!isOpen && !savingName) setEditingCategory(null);
+      }}>
+        <DialogContent className="sm:max-w-[440px] rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-display tracking-tight">Editar nome da categoria</DialogTitle>
+            <DialogDescription>Atualize o nome usado nos seus registros.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={saveName} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-category-name">Nome</Label>
+              <Input id="edit-category-name" value={categoryName}
+                onChange={(event) => setCategoryName(event.target.value)}
+                disabled={savingName} autoFocus />
+            </div>
+            <DialogFooter className="pt-2">
+              <button type="button" disabled={savingName} onClick={() => setEditingCategory(null)}
+                className="rounded-full px-5 py-2 text-sm font-medium hover:bg-accent disabled:opacity-60">
+                Cancelar
+              </button>
+              <button type="submit" disabled={savingName}
+                className="rounded-full bg-[#820AD1] dark:bg-[#6b008b] text-white px-5 py-2 text-sm font-medium disabled:opacity-60">
+                {savingName ? "Salvando..." : "Salvar"}
+              </button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-[440px] rounded-2xl dark:bg-[#1a1a1a] dark:border-[#333]">

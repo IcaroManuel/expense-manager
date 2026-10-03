@@ -59,7 +59,7 @@ export default function Dashboard() {
           <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight leading-tight">
             Suas finanças, no controle.
           </h1>
-          <p className="text-[#6B6A65] text-sm sm:text-base">
+          <p className="hidden sm:block text-[#6B6A65] text-sm sm:text-base">
             Acompanhe entradas, saídas e o quanto da sua renda está comprometida — mês a mês.
           </p>
         </div>
@@ -72,7 +72,7 @@ export default function Dashboard() {
         />
       </section>
 
-      <section className={`grid grid-cols-1 lg:grid-cols-3 gap-6 items-start transition-opacity duration-200 ${loading ? "opacity-50 pointer-events-none" : ""}`}>
+      <section className={`grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 items-start transition-opacity duration-200 ${loading ? "opacity-50 pointer-events-none" : ""}`}>
         <BillingsCard billings={billings} year={year} month={month} onChanged={refresh} summary={summary} previousSummary={previousSummary} categories={categories} />
         <ExpensesCard expenses={expenses} year={year} month={month} onChanged={refresh} categories={categories} />
         <SpendingChart summary={summary} />

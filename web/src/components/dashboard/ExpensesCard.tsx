@@ -253,7 +253,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged, categor
           onClick={startCreate}
           className="inline-flex items-center gap-2 bg-[#ec0000] dark:bg-[#cc0000] text-white hover:bg-[#ff1111] dark:hover:bg-[#ec0000] rounded-full px-4 sm:px-5 py-2.5 text-sm font-medium transition-colors"
         >
-          <Plus size={16} /> <span className="hidden sm:inline">Adicionar</span>
+          <Plus size={16} /> <span className="sr-only sm:not-sr-only">Adicionar</span>
         </button>
       </div>
 
@@ -269,11 +269,11 @@ export default function ExpensesCard({ expenses, year, month, onChanged, categor
             <li
               key={ex.id}
               data-testid={DASHBOARD.expenseItem(ex.id)}
-              className={`py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-3 transition-opacity ${
+              className={`py-3 sm:py-4 flex flex-wrap items-center justify-between gap-2 sm:gap-3 transition-opacity ${
                 isPaid ? "opacity-60" : ""
               }`}
             >
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="flex flex-1 items-center gap-2 sm:gap-3 min-w-0">
                 <ExpenseIcon color={ex.color} categoryIcon={getCategoryIcon(ex.categoryId)} />
                 <div className="min-w-0">
                   <div className="font-medium text-[#1C1C19] dark:text-white truncate text-sm sm:text-base">
@@ -289,6 +289,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged, categor
                 <button
                   data-testid={DASHBOARD.expenseToggleStatus(ex.id)}
                   onClick={() => toggleStatus(ex)}
+                  aria-label={`${EXPENSE_STATUS_LABEL[ex.status]}: alterar status da despesa`}
                   className={`inline-flex items-center gap-1 sm:gap-1.5 rounded-full px-2 sm:px-3 py-1 text-xs font-medium uppercase tracking-wider transition-colors ${
                     isPaid
                       ? "bg-[#EDF2ED] dark:bg-[#1a3a1e] text-[#4A6B4A] dark:text-[#5a8c5e] hover:bg-[#dde6dd] dark:hover:bg-[#2a4a2e]"
@@ -375,7 +376,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged, categor
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="expense-value">Valor (R$)</Label>
                 <Input
@@ -433,7 +434,7 @@ export default function ExpensesCard({ expenses, year, month, onChanged, categor
               </div>
               {form.hasEndDate ? (
                 <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-3">
                     <Select
                       value={form.endMonth}
                       onValueChange={(v) => setForm((f) => ({ ...f, endMonth: v }))}

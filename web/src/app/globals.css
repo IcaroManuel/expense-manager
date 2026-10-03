@@ -159,6 +159,7 @@
         height: 100%;
     }
     body {
+        overflow-wrap: break-word;
         background: var(--bg);
         color: var(--text-1);
         font-family:

@@ -108,7 +108,7 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
-                className="w-full h-10 rounded-xl border border-[#EAE7E1] dark:border-[#333] bg-[#F9F8F6] dark:bg-[#2a2a2a] px-3 text-sm text-[#1C1C19] dark:text-white placeholder-[#9A9892] dark:placeholder-[#707070] outline-none focus:border-[#2D4238] dark:focus:border-[#4a7c4e] focus:ring-2 focus:ring-[#2D4238]/20 dark:focus:ring-[#4a7c4e]/20 transition-all"
+                className="w-full h-10 rounded-xl border border-[#EAE7E1] dark:border-[#333] bg-[#F9F8F6] dark:bg-[#2a2a2a] px-3 text-base sm:text-sm text-[#1C1C19] dark:text-white placeholder-[#9A9892] dark:placeholder-[#707070] outline-none focus:border-[#2D4238] dark:focus:border-[#4a7c4e] focus:ring-2 focus:ring-[#2D4238]/20 dark:focus:ring-[#4a7c4e]/20 transition-all"
               />
             </div>
 
@@ -122,7 +122,7 @@ export default function Login() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Seu nome completo"
-                  className="w-full h-10 rounded-xl border border-[#EAE7E1] dark:border-[#333] bg-[#F9F8F6] dark:bg-[#2a2a2a] px-3 text-sm text-[#1C1C19] dark:text-white placeholder-[#9A9892] dark:placeholder-[#707070] outline-none focus:border-[#2D4238] dark:focus:border-[#4a7c4e] focus:ring-2 focus:ring-[#2D4238]/20 dark:focus:ring-[#4a7c4e]/20 transition-all"
+                  className="w-full h-10 rounded-xl border border-[#EAE7E1] dark:border-[#333] bg-[#F9F8F6] dark:bg-[#2a2a2a] px-3 text-base sm:text-sm text-[#1C1C19] dark:text-white placeholder-[#9A9892] dark:placeholder-[#707070] outline-none focus:border-[#2D4238] dark:focus:border-[#4a7c4e] focus:ring-2 focus:ring-[#2D4238]/20 dark:focus:ring-[#4a7c4e]/20 transition-all"
                 />
               </div>
             )}
@@ -135,7 +135,7 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={mode === "login" ? "Sua senha" : "Mínimo 8 caracteres"}
-                className="w-full h-10 rounded-xl border border-[#EAE7E1] dark:border-[#333] bg-[#F9F8F6] dark:bg-[#2a2a2a] px-3 text-sm text-[#1C1C19] dark:text-white placeholder-[#9A9892] dark:placeholder-[#707070] outline-none focus:border-[#2D4238] dark:focus:border-[#4a7c4e] focus:ring-2 focus:ring-[#2D4238]/20 dark:focus:ring-[#4a7c4e]/20 transition-all"
+                className="w-full h-10 rounded-xl border border-[#EAE7E1] dark:border-[#333] bg-[#F9F8F6] dark:bg-[#2a2a2a] px-3 text-base sm:text-sm text-[#1C1C19] dark:text-white placeholder-[#9A9892] dark:placeholder-[#707070] outline-none focus:border-[#2D4238] dark:focus:border-[#4a7c4e] focus:ring-2 focus:ring-[#2D4238]/20 dark:focus:ring-[#4a7c4e]/20 transition-all"
               />
             </div>
 
@@ -149,7 +149,7 @@ export default function Login() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Repita a senha"
-                  className="w-full h-10 rounded-xl border border-[#EAE7E1] dark:border-[#333] bg-[#F9F8F6] dark:bg-[#2a2a2a] px-3 text-sm text-[#1C1C19] dark:text-white placeholder-[#9A9892] dark:placeholder-[#707070] outline-none focus:border-[#2D4238] dark:focus:border-[#4a7c4e] focus:ring-2 focus:ring-[#2D4238]/20 dark:focus:ring-[#4a7c4e]/20 transition-all"
+                  className="w-full h-10 rounded-xl border border-[#EAE7E1] dark:border-[#333] bg-[#F9F8F6] dark:bg-[#2a2a2a] px-3 text-base sm:text-sm text-[#1C1C19] dark:text-white placeholder-[#9A9892] dark:placeholder-[#707070] outline-none focus:border-[#2D4238] dark:focus:border-[#4a7c4e] focus:ring-2 focus:ring-[#2D4238]/20 dark:focus:ring-[#4a7c4e]/20 transition-all"
                 />
               </div>
             )}
