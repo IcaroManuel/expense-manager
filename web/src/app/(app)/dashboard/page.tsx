@@ -5,28 +5,68 @@ import MonthSelector from "@/components/dashboard/MonthSelector";
 import BillingsCard from "@/components/dashboard/BillingsCard";
 import ExpensesCard from "@/components/dashboard/ExpensesCard";
 import SpendingChart from "@/components/dashboard/SpendingChart";
-import SummaryCards from "@/components/dashboard/SummaryCards";
 import { fetchBillings, fetchExpenses, fetchSummary, fetchCategories } from "@/lib/api";
 import { DASHBOARD } from "@/constants/test-ids";
+import { Expense } from "@/dtos/expense";
 import { Summary } from "@/dtos/summary";
+
+const getNextMonthYear = (year: number, month: number) =>
+  month === 12 ? { year: year + 1, month: 1 } : { year, month: month + 1 };
 
 export default function Dashboard() {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth() + 1);
   const [billings, setBillings] = useState([]);
-  const [expenses, setExpenses] = useState([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [summary, setSummary] = useState<Summary>({} as Summary);
   const [previousSummary, setPreviousSummary] = useState<Summary | null>(null);
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [initialPeriodResolved, setInitialPeriodResolved] = useState(false);
   const [firstYear, setFirstYear] = useState<number | undefined>(undefined);
 
   const getPreviousMonthYear = (y: number, m: number) =>
     m === 1 ? { year: y - 1, month: 12 } : { year: y, month: m - 1 };
 
+  useEffect(() => {
+    let cancelled = false;
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1;
+
+    const resolveInitialPeriod = async () => {
+      try {
+        const currentExpenses: Expense[] = await fetchExpenses(currentYear, currentMonth);
+        const allCurrentExpensesArePaid =
+          currentExpenses.length > 0 &&
+          currentExpenses.every((expense) => expense.status === "PAID");
+
+        if (!cancelled && allCurrentExpensesArePaid) {
+          const nextPeriod = getNextMonthYear(currentYear, currentMonth);
+          setYear(nextPeriod.year);
+          setMonth(nextPeriod.month);
+        }
+      } catch {
+        if (!cancelled) {
+          setYear(currentYear);
+          setMonth(currentMonth);
+        }
+      } finally {
+        if (!cancelled) {
+          setInitialPeriodResolved(true);
+        }
+      }
+    };
+
+    resolveInitialPeriod();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const refresh = useCallback(async () => {
-    setLoading(true);
     const prev = getPreviousMonthYear(year, month);
     try {
       const [b, e, s, ps, c] = await Promise.all([
@@ -42,15 +82,26 @@ export default function Dashboard() {
       setPreviousSummary(ps);
       setCategories(c);
 
-      if (firstYear === undefined && e.length > 0) {
-        setFirstYear(year);
+      if (e.length > 0) {
+        setFirstYear((currentFirstYear) =>
+          currentFirstYear ?? Math.min(year, new Date().getFullYear()),
+        );
       }
     } finally {
       setLoading(false);
     }
   }, [year, month]);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    if (initialPeriodResolved) {
+      refresh();
+    }
+  }, [initialPeriodResolved, refresh]);
+
+  const refreshAfterChange = () => {
+    setLoading(true);
+    refresh();
+  };
 
   return (
     <div data-testid={DASHBOARD.root}>
@@ -66,15 +117,20 @@ export default function Dashboard() {
         <MonthSelector
           year={year}
           month={month}
-          onChange={(y, m) => { setYear(y); setMonth(m); }}
+          onChange={(y, m) => {
+            if (y === year && m === month) return;
+            setLoading(true);
+            setYear(y);
+            setMonth(m);
+          }}
           loading={loading}
           firstYear={firstYear ?? today.getFullYear()}
         />
       </section>
 
       <section className={`grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 items-start transition-opacity duration-200 ${loading ? "opacity-50 pointer-events-none" : ""}`}>
-        <BillingsCard billings={billings} year={year} month={month} onChanged={refresh} summary={summary} previousSummary={previousSummary} categories={categories} />
-        <ExpensesCard expenses={expenses} year={year} month={month} onChanged={refresh} categories={categories} />
+        <BillingsCard billings={billings} year={year} month={month} onChanged={refreshAfterChange} summary={summary} previousSummary={previousSummary} categories={categories} />
+        <ExpensesCard expenses={expenses} year={year} month={month} onChanged={refreshAfterChange} categories={categories} />
         <SpendingChart summary={summary} />
       </section>
     </div>
